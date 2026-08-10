@@ -17,3 +17,33 @@
 - Implementados modelos de séries e exercícios realizados, repositório local de sessões e rotina demonstrativa editável.
 - Implementadas telas para escolher rotina, iniciar treino, informar séries/repetições/carga e concluir localmente.
 - Concluída a Fase 2 com registro de atividades, histórico e recorde pessoal de corrida, todos locais em memória.
+
+## 2026-08-07 — Fase 3 iniciada
+
+- Adicionados estados explícitos para convite de amizade e operações locais de envio, aceite e recusa.
+- A tela Amigos agora diferencia convites recebidos e enviados; aceitar um recebido adiciona a pessoa ao círculo local. QR, código de convite e chat seguem demonstrativos até a integração do backend.
+
+## 2026-08-07 — Fase 4 iniciada
+
+- Adicionada base de Supabase/PostgreSQL: configuração segura por `--dart-define`, exemplo de ambiente e migração inicial com RLS.
+- Nenhum projeto externo, URL ou chave foi configurado; a aplicação segue usando dados locais até a conexão ser fornecida.
+- Google Auth foi priorizado para a Fase 4, após criação do projeto Supabase e configuração segura de OAuth (Client ID, Client Secret, callbacks e deep links).
+
+## 2026-08-07 — Ambiente Android
+
+- Instaladas as Android Command-line Tools oficiais e aceitas as licenças do Android SDK.
+- `flutter doctor` passou a validar o toolchain Android.
+- O AVD existente `Medium_Phone` permaneceu offline após cold boot; recriação/ajuste do AVD fica pendente.
+
+## 2026-08-10 — Persistência local iniciada
+
+- Criado o banco PostgreSQL local `limitbreaker` e aplicada a migração inicial de perfis, avaliações de saúde, respostas descritivas e sugestões de treino.
+- A aplicação Flutter ainda não acessa o banco diretamente: a próxima fatia cria uma API local autenticada, sem senha de banco no APK.
+- Definida e testada a classificação autorrelatada dos quatro perfis de treino.
+
+## 2026-08-10 — Estados iniciais e modalidades
+
+- Removidos os dados fictícios pré-carregados de treino, amigos, conquistas, ranking e gráficos. Uma conta nova inicia com zero registros e posição global inicial #1 enquanto não houver outra pessoa cadastrada.
+- Adicionado carrossel de modalidades no onboarding, com seleção obrigatória e sem repetição para os pesos 75/15/10.
+- Adicionadas ilustrações temporárias geradas por IA em preto e branco para musculação, corrida, ciclismo, natação, futebol e lutas.
+- Incluído campo obrigatório de e-mail no onboarding; o esquema PostgreSQL já garante unicidade por perfil.

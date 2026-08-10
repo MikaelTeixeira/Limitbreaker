@@ -31,10 +31,14 @@ migrate_working_dir/
 
 # Local inspection artifacts
 /tmp/
+.env
+.env.*
+!.env.example
 .pub-cache/
 .pub/
 /build/
 /coverage/
+/test/failures/
 
 # Symbolication related
 app.*.symbols

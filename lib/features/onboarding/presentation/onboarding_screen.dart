@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/repositories/repositories.dart';
+import 'sport_priority_carousel.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -16,6 +17,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _pageController = PageController();
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
+  final _email = TextEditingController();
   final _age = TextEditingController();
   final _height = TextEditingController();
   final _weight = TextEditingController();
@@ -24,6 +26,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   String? _health;
   String? _family;
   String? _limitation;
+  var _sports = List<SportType?>.filled(3, null);
   var _consent = false;
 
   static const _goalLabels = {
@@ -39,6 +42,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void dispose() {
     _pageController.dispose();
     _name.dispose();
+    _email.dispose();
     _age.dispose();
     _height.dispose();
     _weight.dispose();
@@ -53,19 +57,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (_page == 1 && !(_formKey.currentState?.validate() ?? false)) {
       return false;
     }
-    if (_page == 2 && _health == null) {
+    if (_page == 2 && _sports.any((sport) => sport == null)) {
+      _message('Defina as três modalidades para o Ranking.');
+      return false;
+    }
+    if (_page == 3 && _health == null) {
       _message('Selecione uma resposta provisória.');
       return false;
     }
-    if (_page == 3 && _family == null) {
+    if (_page == 4 && _family == null) {
       _message('Selecione uma resposta provisória.');
       return false;
     }
-    if (_page == 4 && _limitation == null) {
+    if (_page == 5 && _limitation == null) {
       _message('Informe se existe alguma limitação.');
       return false;
     }
-    if (_page == 5 && !_consent) {
+    if (_page == 6 && !_consent) {
       _message('O aceite é necessário para continuar.');
       return false;
     }
@@ -77,7 +85,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   ).showSnackBar(SnackBar(content: Text(value)));
   Future<void> _next() async {
     if (!_validCurrent()) return;
-    if (_page < 5) {
+    if (_page < 6) {
       await _pageController.nextPage(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOut,
@@ -103,13 +111,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               icon: const Icon(Icons.arrow_back),
             ),
       title: Text(
-        'ETAPA ${_page + 1} / 6',
+        'ETAPA ${_page + 1} / 7',
         style: Theme.of(context).textTheme.labelSmall,
       ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(2),
         child: LinearProgressIndicator(
-          value: (_page + 1) / 6,
+          value: (_page + 1) / 7,
           minHeight: 2,
           backgroundColor: AppColors.graphite,
           color: AppColors.frost,
@@ -151,6 +159,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     key: _formKey,
                     child: Column(
                       children: [
+                        TextFormField(
+                          controller: _email,
+                          keyboardType: TextInputType.emailAddress,
+                          autofillHints: const [AutofillHints.email],
+                          decoration: const InputDecoration(
+                            labelText: 'E-mail',
+                            hintText: 'voce@exemplo.com',
+                          ),
+                          validator: _emailValidator,
+                        ),
+                        const SizedBox(height: 10),
                         TextFormField(
                           controller: _name,
                           decoration: const InputDecoration(
@@ -198,6 +217,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         ),
                       ],
                     ),
+                  ),
+                ),
+                _Step(
+                  title: 'SELECIONE SUAS\nMODALIDADES.',
+                  subtitle:
+                      'Deslize para escolher. O Ranking usará 75% da modalidade primária, 15% da secundária e 10% da terciária.',
+                  child: SportPriorityCarousel(
+                    selection: _sports,
+                    onChanged: (selection) =>
+                        setState(() => _sports = selection),
                   ),
                 ),
                 _ChoiceStep(
@@ -249,7 +278,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(_page == 5 ? 'CONCLUIR' : 'CONTINUAR'),
+                  Text(_page == 6 ? 'CONCLUIR' : 'CONTINUAR'),
                   const Icon(Icons.arrow_forward),
                 ],
               ),
@@ -266,6 +295,13 @@ String? _positive(String? value) =>
         double.parse((value ?? '').replaceAll(',', '.')) <= 0
     ? 'Informe um valor válido.'
     : null;
+
+String? _emailValidator(String? value) {
+  final email = value?.trim() ?? '';
+  return RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)
+      ? null
+      : 'Informe um e-mail válido.';
+}
 
 class _Step extends StatelessWidget {
   const _Step({

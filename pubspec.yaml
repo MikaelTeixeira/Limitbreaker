@@ -37,6 +37,7 @@ dependencies:
   go_router: ^17.4.0
   flutter_riverpod: ^3.4.2
   shared_preferences: ^2.5.5
+  supabase_flutter: ^2.17.1
 
 dev_dependencies:
   flutter_test:
@@ -56,6 +57,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/images/limit_breaker_hero.png
+    - assets/images/sports/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

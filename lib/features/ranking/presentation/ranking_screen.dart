@@ -3,16 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/app_theme.dart';
 import '../../../core/widgets/brand_widgets.dart';
+import '../../../features/ranking/domain/ranking_calculator.dart';
 import '../../../shared/repositories/repositories.dart';
 
 class RankingScreen extends ConsumerStatefulWidget {
   const RankingScreen({super.key});
+
   @override
   ConsumerState<RankingScreen> createState() => _RankingScreenState();
 }
 
 class _RankingScreenState extends ConsumerState<RankingScreen> {
   var friends = false;
+
   @override
   Widget build(BuildContext context) {
     final ranking = ref.watch(rankingProvider);
@@ -40,108 +43,101 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
             ),
             const SizedBox(height: 26),
             Text(
-              friends ? '#03' : '#84',
+              friends ? '—' : '#1',
               style: Theme.of(context).textTheme.displayLarge,
             ),
             Text(
-              friends ? 'ENTRE AMIGOS' : 'POSIÇÃO GLOBAL',
+              friends ? 'SEM AMIGOS ADICIONADOS' : 'POSIÇÃO GLOBAL INICIAL',
               style: Theme.of(context).textTheme.labelSmall,
             ),
             const SizedBox(height: 20),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'RANKING PROVISÓRIO',
-                            style: TextStyle(fontWeight: FontWeight.w900),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '${result.totalScore?.toStringAsFixed(1)} pontos normalizados',
-                          ),
-                        ],
-                      ),
+            _RankingSummary(result: result, friends: friends),
+            if (!friends && result.rankedCategories.isNotEmpty) ...[
+              const SizedBox(height: 28),
+              const SectionHeading(
+                'Base do cálculo',
+                eyebrow: 'Top 3 · pesos 75 / 15 / 10',
+              ),
+              const SizedBox(height: 12),
+              ...List.generate(result.rankedCategories.length, (index) {
+                final item = result.rankedCategories[index];
+                return Card(
+                  child: ListTile(
+                    leading: CircleAvatar(child: Text('${index + 1}')),
+                    title: Text(item.category.name),
+                    subtitle: Text(
+                      'Peso ${(result.appliedWeights[index] * 100).round()}%',
                     ),
-                    const Icon(Icons.bolt, color: AppColors.frost, size: 42),
-                  ],
-                ),
-              ),
-            ),
+                    trailing: Text(item.normalizedScore.toStringAsFixed(0)),
+                  ),
+                );
+              }),
+            ],
             const SizedBox(height: 28),
-            const SectionHeading(
-              'Base do cálculo',
-              eyebrow: 'Top 3 · pesos 75 / 15 / 10',
-            ),
+            const SectionHeading('Classificação', eyebrow: 'Dados reais'),
             const SizedBox(height: 12),
-            ...List.generate(result.rankedCategories.length, (index) {
-              final item = result.rankedCategories[index];
-              return Card(
+            if (friends)
+              const Card(
                 child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: index == 0
-                        ? AppColors.bone
-                        : AppColors.graphite,
-                    foregroundColor: index == 0
-                        ? AppColors.voidBlack
-                        : AppColors.bone,
-                    child: Text('${index + 1}'),
-                  ),
-                  title: Text(
-                    item.category.name,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  subtitle: Text(
-                    'Peso ${(result.appliedWeights[index] * 100).round()}%',
-                  ),
-                  trailing: Text(
-                    item.normalizedScore.toStringAsFixed(0),
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
+                  leading: Icon(Icons.group_outlined),
+                  title: Text('Nenhum amigo adicionado'),
+                  subtitle: Text('Envie um convite para comparar posições.'),
                 ),
-              );
-            }),
-            const SizedBox(height: 28),
-            const SectionHeading('Classificação', eyebrow: 'Dados simulados'),
-            const SizedBox(height: 12),
-            ..._people(friends).asMap().entries.map(
-              (entry) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Text(
-                  '${entry.key + 1}'.padLeft(2, '0'),
-                  style: Theme.of(context).textTheme.labelSmall,
+              )
+            else
+              const Card(
+                child: ListTile(
+                  leading: Text('01'),
+                  title: Text('Você'),
+                  subtitle: Text('Ainda sem pontuação registrada'),
+                  trailing: Text('—'),
                 ),
-                title: Text(entry.value.$1),
-                trailing: Text(entry.value.$2),
-                tileColor: entry.value.$1 == 'Você' ? AppColors.bone : null,
-                textColor: entry.value.$1 == 'Você'
-                    ? AppColors.voidBlack
-                    : null,
               ),
-            ),
           ],
         ),
       ),
     );
   }
+}
 
-  List<(String, String)> _people(bool onlyFriends) => onlyFriends
-      ? [
-          ('Lívia', '82.4'),
-          ('Rafael', '77.8'),
-          ('Você', '80.8'),
-          ('Caio', '68.3'),
-        ]
-      : [
-          ('Joana Lima', '96.2'),
-          ('Carlos Mendes', '94.8'),
-          ('Ana Costa', '92.1'),
-          ('Mateus Rocha', '91.5'),
-          ('Você', '80.8'),
-        ];
+class _RankingSummary extends StatelessWidget {
+  const _RankingSummary({required this.result, required this.friends});
+
+  final RankingCalculationResult result;
+  final bool friends;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  friends
+                      ? 'CONVIDE PARA COMPARAR'
+                      : result.status == RankingCalculationStatus.unavailable
+                      ? 'SEM PONTUAÇÃO AINDA'
+                      : 'RANKING PROVISÓRIO',
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  friends
+                      ? 'O ranking entre amigos aparece após o primeiro convite aceito.'
+                      : result.totalScore == null
+                      ? 'Registre atividades em três modalidades para calcular sua pontuação.'
+                      : '${result.totalScore!.toStringAsFixed(1)} pontos normalizados',
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.bolt, color: AppColors.frost, size: 42),
+        ],
+      ),
+    ),
+  );
 }

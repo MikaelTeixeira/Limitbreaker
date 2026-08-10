@@ -50,7 +50,7 @@ void main() {
     expect(find.text('BOM DIA, ATLETA.'), findsOneWidget);
     await tester.tap(find.text('Ranking').last);
     await tester.pumpAndSettle();
-    expect(find.text('BASE DO CÁLCULO'), findsOneWidget);
+    expect(find.text('SEM PONTUAÇÃO AINDA'), findsOneWidget);
     expect(find.byType(NavigationBar), findsOneWidget);
   });
 }

@@ -6,7 +6,7 @@ Aplicativo mobile Flutter para acompanhar evolução física e esportiva com dis
 
 ## Estado atual
 
-A Fase 1 entrega uma vertical slice local e navegável: abertura, boas-vindas, onboarding em seis etapas, Dashboard, Ranking, Amigos, Conquistas e Perfil com dois gráficos poligonais. Todos os dados são simulados; não há backend, autenticação real ou processamento médico.
+A aplicação inicia sem registros fictícios: zero treinos, atividades, amigos, conquistas e pontuação. O onboarding inclui a escolha de modalidades primária, secundária e terciária para o Ranking. O PostgreSQL local já possui o esquema inicial, mas a API autenticada que conectará o Flutter a ele ainda está em desenvolvimento.
 
 ## Requisitos
 

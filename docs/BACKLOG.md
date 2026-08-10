@@ -4,8 +4,8 @@
 
 - Fase 1 — Fundação e vertical slice: concluída.
 - Fase 2 — Treinos e atividades: concluída (dados locais em memória).
-- Fase 3 — Social e conquistas: planejada.
-- Fase 4 — Backend: pendente de decisão técnica.
+- Fase 3 — Social e conquistas: em desenvolvimento.
+- Fase 4 — Backend: em desenvolvimento (PostgreSQL local inicializado; Supabase planejado).
 - Fase 5 — Inteligência e personalização: fora do escopo imediato.
 
 ## Implementado — Fase 1
@@ -22,6 +22,9 @@
 
 - Revalidação do build APK no toolchain Android local.
 - Refinamento de acessibilidade com leitores de tela reais.
+- Fase 3: convites locais, amizades, chat demonstrativo e conquistas completas.
+- Fase 4: implementar login e cadastro por e-mail, seguido de Google Auth assim que o projeto Supabase e as credenciais OAuth estiverem disponíveis.
+- Fase 4: conectar o Flutter a uma API local autenticada para persistir o onboarding e as sugestões no PostgreSQL.
 
 ## Planejado — Próximas fases
 
@@ -36,6 +39,7 @@
 - Questionários de saúde e histórico familiar.
 - Textos jurídicos, níveis e nomes de Ranking.
 - Backend, autenticação e política formal de LGPD.
+- Credenciais OAuth do Google, URLs de callback e deep links para Android/iOS.
 
 ## Fora do MVP
 

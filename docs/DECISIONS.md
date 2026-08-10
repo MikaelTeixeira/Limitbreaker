@@ -19,3 +19,11 @@ Com menos de três categorias, nenhum total oficial é calculado. O resultado ti
 ## ADR-005 — Marca desenhada em Flutter
 
 A fratura e a silhueta são `CustomPainter`, mantendo o produto integralmente Flutter, evitando assets externos e permitindo evolução visual por tokens.
+
+## ADR-006 — Perfil de treino por autorrelato conservador
+
+O perfil de treino é uma classificação de produto baseada em respostas autorrelatadas, e não um diagnóstico. A classificação mais restritiva requer confirmação explícita de necessidade de treino muito leve/adaptado; condições e histórico familiar isolados não recebem interpretação clínica automática.
+
+## ADR-007 — PostgreSQL atrás de uma API local
+
+O PostgreSQL local é o armazenamento de desenvolvimento. O Flutter não se conecta a ele diretamente, pois isso exporia credenciais no APK e impediria controles de autorização. Uma API local autenticada fará a ponte até a futura migração para Supabase.

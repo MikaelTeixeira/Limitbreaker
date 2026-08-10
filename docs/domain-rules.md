@@ -2,11 +2,16 @@
 
 ## Onboarding
 
-- O primeiro acesso exibe boas-vindas e seis etapas curtas.
-- Objetivo, dados básicos, respostas provisórias e consentimento são obrigatórios para avançar.
+- O primeiro acesso exibe boas-vindas e sete etapas curtas.
+- Objetivo, e-mail, dados básicos, modalidades, respostas provisórias e consentimento são obrigatórios para avançar.
+- Cada perfil possui exatamente um e-mail, validado na interface e único no banco de dados.
 - A conclusão é persistida localmente por uma abstração de armazenamento.
 - Saúde e histórico familiar são estruturas provisórias, não diagnóstico.
 - Textos jurídicos são placeholders e ainda exigem validação formal.
+- Condições pessoais e histórico familiar são autorrelatados, com opção de declarar ausência ou descrever o problema; não constituem diagnóstico.
+- Perfil 1 exige nenhuma preocupação informada e rotina ativa; Perfil 2 exige nenhuma preocupação informada, mas rotina sedentária; Perfil 3 é usado quando há condição pessoal ou histórico familiar relatado; Perfil 4 depende de indicação explícita de necessidade de treino muito leve/adaptado.
+- O Perfil 4 não é prescrição fisioterapêutica: a interface deve orientar busca de profissional habilitado antes de iniciar treino.
+- O onboarding exige três modalidades distintas, ordenadas como primária (75%), secundária (15%) e terciária (10%). Essa ordem define os pesos quando houver pontuação real registrada.
 
 ## Ranking
 

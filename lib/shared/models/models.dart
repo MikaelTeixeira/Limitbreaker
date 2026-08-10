@@ -7,9 +7,32 @@ enum UserGoal {
   maintainFitness,
 }
 
+enum SportType { strength, running, cycling, swimming, football, martialArts }
+
+extension SportTypeDetails on SportType {
+  String get label => switch (this) {
+    SportType.strength => 'Musculação',
+    SportType.running => 'Corrida',
+    SportType.cycling => 'Ciclismo',
+    SportType.swimming => 'Natação',
+    SportType.football => 'Futebol',
+    SportType.martialArts => 'Lutas',
+  };
+
+  String get assetPath => switch (this) {
+    SportType.strength => 'assets/images/sports/strength.png',
+    SportType.running => 'assets/images/sports/running.png',
+    SportType.cycling => 'assets/images/sports/cycling.png',
+    SportType.swimming => 'assets/images/sports/swimming.png',
+    SportType.football => 'assets/images/sports/football.png',
+    SportType.martialArts => 'assets/images/sports/martial_arts.png',
+  };
+}
+
 class UserProfile {
   const UserProfile({
     required this.id,
+    required this.email,
     required this.displayName,
     required this.age,
     required this.heightCm,
@@ -17,6 +40,7 @@ class UserProfile {
     required this.createdAt,
   });
   final String id;
+  final String email;
   final String displayName;
   final int age;
   final double heightCm;
@@ -28,6 +52,49 @@ class HealthAnswer {
   const HealthAnswer({required this.questionId, required this.optionId});
   final String questionId;
   final String optionId;
+}
+
+enum DisclosureStatus { noProblem, reported }
+
+enum ActivityBaseline { active, sedentary }
+
+enum TrainingProfile {
+  completelyHealthy,
+  healthy,
+  hasLightConcerns,
+  requiresGentleTraining,
+}
+
+class HealthDisclosure {
+  const HealthDisclosure({
+    required this.questionId,
+    required this.status,
+    this.description,
+  });
+
+  final String questionId;
+  final DisclosureStatus status;
+  final String? description;
+
+  bool get isReported => status == DisclosureStatus.reported;
+}
+
+class HealthAssessment {
+  const HealthAssessment({
+    required this.personalDisclosures,
+    required this.familyHistory,
+    required this.activityBaseline,
+    required this.requiresGentleTraining,
+    required this.profile,
+    required this.updatedAt,
+  });
+
+  final List<HealthDisclosure> personalDisclosures;
+  final List<HealthDisclosure> familyHistory;
+  final ActivityBaseline activityBaseline;
+  final bool requiresGentleTraining;
+  final TrainingProfile profile;
+  final DateTime updatedAt;
 }
 
 class HealthProfile {
@@ -284,10 +351,23 @@ class FriendSummary {
   final String recentActivity;
 }
 
+enum FriendRequestStatus { pending, accepted, declined }
+
+enum FriendRequestDirection { received, sent }
+
 class FriendRequest {
-  const FriendRequest({required this.id, required this.fromUserId});
+  const FriendRequest({
+    required this.id,
+    required this.fromUserId,
+    required this.displayName,
+    required this.status,
+    required this.direction,
+  });
   final String id;
   final String fromUserId;
+  final String displayName;
+  final FriendRequestStatus status;
+  final FriendRequestDirection direction;
 }
 
 class ChatConversation {

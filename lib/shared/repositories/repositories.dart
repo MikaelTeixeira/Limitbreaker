@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/ranking/domain/ranking_calculator.dart';
-import '../data/mock_data.dart';
 import '../models/models.dart';
 
 abstract interface class AuthenticationRepository {
@@ -49,7 +48,7 @@ abstract interface class ActivityRepository {
 }
 
 abstract interface class DashboardRepository {
-  Future<WorkoutPlan> getTodayWorkout();
+  Future<WorkoutPlan?> getTodayWorkout();
   Future<List<RadarAttribute>> getMuscleAttributes();
   Future<List<RadarAttribute>> getCategoryAttributes();
 }
@@ -64,6 +63,9 @@ abstract interface class AchievementRepository {
 
 abstract interface class FriendRepository {
   Future<List<FriendSummary>> getFriends();
+  Future<List<FriendRequest>> getRequests();
+  Future<FriendRequest> sendRequest(String code);
+  Future<void> respondToRequest(String requestId, FriendRequestStatus status);
 }
 
 abstract interface class ChatRepository {
@@ -80,7 +82,7 @@ class LocalOnboardingRepository implements OnboardingRepository {
       (await SharedPreferences.getInstance()).setBool(_key, true);
 }
 
-class MockAppRepository
+class LocalAppRepository
     implements
         AuthenticationRepository,
         ProfileRepository,
@@ -94,18 +96,21 @@ class MockAppRepository
         ChatRepository {
   final List<WorkoutSession> _workoutSessions = [];
   final List<ActivitySession> _activities = [];
+  final List<FriendSummary> _friends = [];
+  final List<FriendRequest> _requests = [];
   var _nextWorkoutSessionId = 1;
   var _nextActivityId = 1;
   @override
-  Future<UserProfile?> currentUser() async => MockData.profile;
+  Future<UserProfile?> currentUser() async => null;
   @override
   Future<void> signOut() async {}
   @override
-  Future<UserProfile> getProfile() async => MockData.profile;
+  Future<UserProfile> getProfile() async =>
+      throw StateError('Nenhum perfil foi cadastrado.');
   @override
   Future<HealthProfile?> getHealthProfile() async => null;
   @override
-  Future<List<WorkoutPlan>> getPlans() async => MockData.workoutPlans;
+  Future<List<WorkoutPlan>> getPlans() async => const [];
   @override
   Future<List<WorkoutSession>> getSessions() async =>
       List.unmodifiable(_workoutSessions.reversed);
@@ -200,19 +205,67 @@ class MockAppRepository
   }
 
   @override
-  Future<WorkoutPlan> getTodayWorkout() async => MockData.workoutPlans.first;
+  Future<WorkoutPlan?> getTodayWorkout() async => null;
   @override
-  Future<List<RadarAttribute>> getMuscleAttributes() async => MockData.muscles;
+  Future<List<RadarAttribute>> getMuscleAttributes() async => const [];
   @override
-  Future<List<RadarAttribute>> getCategoryAttributes() async =>
-      MockData.categoryRadar;
+  Future<List<RadarAttribute>> getCategoryAttributes() async => const [];
   @override
   Future<RankingCalculationResult> getCurrentRanking() async =>
-      const RankingCalculator().calculate(MockData.categories);
+      const RankingCalculator().calculate(const []);
   @override
-  Future<List<Achievement>> getAchievements() async => MockData.achievements;
+  Future<List<Achievement>> getAchievements() async => const [];
   @override
-  Future<List<FriendSummary>> getFriends() async => MockData.friends;
+  Future<List<FriendSummary>> getFriends() async => List.unmodifiable(_friends);
+  @override
+  Future<List<FriendRequest>> getRequests() async =>
+      List.unmodifiable(_requests);
+  @override
+  Future<FriendRequest> sendRequest(String code) async {
+    final cleanCode = code.trim().toUpperCase();
+    if (cleanCode.isEmpty) {
+      throw ArgumentError.value(code, 'code', 'Informe um código.');
+    }
+    final request = FriendRequest(
+      id: 'request-${_requests.length + 1}',
+      fromUserId: cleanCode,
+      displayName: 'Convite enviado',
+      status: FriendRequestStatus.pending,
+      direction: FriendRequestDirection.sent,
+    );
+    _requests.add(request);
+    return request;
+  }
+
+  @override
+  Future<void> respondToRequest(
+    String requestId,
+    FriendRequestStatus status,
+  ) async {
+    final index = _requests.indexWhere((request) => request.id == requestId);
+    if (index == -1) {
+      throw StateError('Convite não encontrado.');
+    }
+    final current = _requests[index];
+    _requests[index] = FriendRequest(
+      id: current.id,
+      fromUserId: current.fromUserId,
+      displayName: current.displayName,
+      status: status,
+      direction: current.direction,
+    );
+    if (status == FriendRequestStatus.accepted &&
+        current.direction == FriendRequestDirection.received) {
+      _friends.add(
+        FriendSummary(
+          displayName: current.displayName,
+          rankingLabel: 'Novo no círculo',
+          recentActivity: 'Amizade confirmada agora',
+        ),
+      );
+    }
+  }
+
   @override
   Future<List<ChatConversation>> getConversations() async => const [];
 }
@@ -220,8 +273,8 @@ class MockAppRepository
 final onboardingRepositoryProvider = Provider<OnboardingRepository>(
   (ref) => LocalOnboardingRepository(),
 );
-final appRepositoryProvider = Provider<MockAppRepository>(
-  (ref) => MockAppRepository(),
+final appRepositoryProvider = Provider<LocalAppRepository>(
+  (ref) => LocalAppRepository(),
 );
 final workoutRepositoryProvider = Provider<WorkoutRepository>(
   (ref) => ref.watch(appRepositoryProvider),
@@ -229,11 +282,11 @@ final workoutRepositoryProvider = Provider<WorkoutRepository>(
 final onboardingCompleteProvider = FutureProvider<bool>(
   (ref) => ref.watch(onboardingRepositoryProvider).isComplete(),
 );
-final todayWorkoutProvider = FutureProvider<WorkoutPlan>(
+final todayWorkoutProvider = FutureProvider<WorkoutPlan?>(
   (ref) => ref
       .watch(workoutRepositoryProvider)
       .getPlans()
-      .then((plans) => plans.first),
+      .then((plans) => plans.isEmpty ? null : plans.first),
 );
 final workoutPlansProvider = FutureProvider<List<WorkoutPlan>>(
   (ref) => ref.watch(workoutRepositoryProvider).getPlans(),
@@ -258,6 +311,9 @@ final rankingProvider = FutureProvider<RankingCalculationResult>(
 );
 final friendsProvider = FutureProvider<List<FriendSummary>>(
   (ref) => ref.watch(appRepositoryProvider).getFriends(),
+);
+final friendRequestsProvider = FutureProvider<List<FriendRequest>>(
+  (ref) => ref.watch(appRepositoryProvider).getRequests(),
 );
 final achievementsProvider = FutureProvider<List<Achievement>>(
   (ref) => ref.watch(appRepositoryProvider).getAchievements(),

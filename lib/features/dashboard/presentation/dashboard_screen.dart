@@ -51,36 +51,68 @@ class DashboardScreen extends ConsumerWidget {
                   color: AppColors.bone,
                   child: Padding(
                     padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'TREINO DO DIA',
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(color: AppColors.voidBlack),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          plan.name.toUpperCase(),
-                          style: Theme.of(context).textTheme.headlineMedium
-                              ?.copyWith(color: AppColors.voidBlack),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${plan.exerciseCount} exercícios · ${plan.estimatedMinutes} min · ${plan.groups.join(' + ')}',
-                          style: const TextStyle(color: Color(0xFF454949)),
-                        ),
-                        const SizedBox(height: 22),
-                        FilledButton.tonal(
-                          onPressed: () => context.push('/workouts/${plan.id}'),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.voidBlack,
-                            foregroundColor: AppColors.bone,
+                    child: plan == null
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'SEU PRIMEIRO TREINO',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium
+                                    ?.copyWith(color: AppColors.voidBlack),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Nenhum treino registrado ainda. Crie ou solicite uma sugestão para começar.',
+                                style: TextStyle(color: Color(0xFF454949)),
+                              ),
+                              const SizedBox(height: 18),
+                              FilledButton.tonal(
+                                onPressed: () => context.push('/workouts'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: AppColors.voidBlack,
+                                  foregroundColor: AppColors.bone,
+                                ),
+                                child: const Text('VER TREINOS'),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'TREINO DO DIA',
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(color: AppColors.voidBlack),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                plan.name.toUpperCase(),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium
+                                    ?.copyWith(color: AppColors.voidBlack),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '${plan.exerciseCount} exercícios · ${plan.estimatedMinutes} min · ${plan.groups.join(' + ')}',
+                                style: const TextStyle(
+                                  color: Color(0xFF454949),
+                                ),
+                              ),
+                              const SizedBox(height: 22),
+                              FilledButton.tonal(
+                                onPressed: () =>
+                                    context.push('/workouts/${plan.id}'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: AppColors.voidBlack,
+                                  foregroundColor: AppColors.bone,
+                                ),
+                                child: const Text('INICIAR TREINO'),
+                              ),
+                            ],
                           ),
-                          child: const Text('INICIAR TREINO'),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ),
@@ -115,12 +147,12 @@ class DashboardScreen extends ConsumerWidget {
                     const Row(
                       children: [
                         MetricTile(
-                          value: '12',
+                          value: '0',
                           label: 'dias em sequência',
                           accent: true,
                         ),
-                        MetricTile(value: '32', label: 'treinos'),
-                        MetricTile(value: '+8%', label: 'evolução'),
+                        MetricTile(value: '0', label: 'treinos'),
+                        MetricTile(value: '—', label: 'evolução'),
                       ],
                     ),
                   ],
@@ -146,7 +178,7 @@ class DashboardScreen extends ConsumerWidget {
                     child: Row(
                       children: [
                         Text(
-                          '#84',
+                          '#1',
                           style: Theme.of(context).textTheme.displayMedium,
                         ),
                         const SizedBox(width: 18),
@@ -160,7 +192,9 @@ class DashboardScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                '${result.totalScore?.toStringAsFixed(1)} pontos · ${result.rankedCategories.first.category.name}',
+                                result.totalScore == null
+                                    ? 'Você é a primeira pessoa cadastrada. Registre um treino para pontuar.'
+                                    : '${result.totalScore!.toStringAsFixed(1)} pontos · ${result.rankedCategories.first.category.name}',
                               ),
                             ],
                           ),

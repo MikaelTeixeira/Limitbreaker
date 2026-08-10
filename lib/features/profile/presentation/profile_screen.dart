@@ -31,36 +31,33 @@ class ProfileScreen extends ConsumerWidget {
               radius: 44,
               backgroundColor: AppColors.graphite,
               child: Text(
-                'VO',
+                '—',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
               ),
             ),
           ),
           const SizedBox(height: 14),
           Text(
-            'VICTOR OLIVEIRA',
+            'SEU PERFIL',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           const SizedBox(height: 4),
           Text(
-            'NÍVEL DEMONSTRATIVO · RANKING #84',
+            'SEM TREINOS REGISTRADOS · RANKING #1',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.labelSmall,
           ),
           const SizedBox(height: 24),
           const Row(
             children: [
-              MetricTile(value: '12', label: 'sequência', accent: true),
-              MetricTile(value: '32', label: 'treinos'),
-              MetricTile(value: '04', label: 'conquistas'),
+              MetricTile(value: '0', label: 'sequência', accent: true),
+              MetricTile(value: '0', label: 'treinos'),
+              MetricTile(value: '0', label: 'conquistas'),
             ],
           ),
           const SizedBox(height: 32),
-          const SectionHeading(
-            'Mapa muscular',
-            eyebrow: 'Estimativa não diagnóstica',
-          ),
+          const SectionHeading('Mapa muscular', eyebrow: 'Aguardando dados'),
           const SizedBox(height: 12),
           Card(
             child: Padding(
@@ -76,12 +73,21 @@ class ProfileScreen extends ConsumerWidget {
                     child: Text('Não foi possível carregar o gráfico.'),
                   ),
                 ),
-                data: (data) => RadarChart(attributes: data),
+                data: (data) => data.isEmpty
+                    ? const SizedBox(
+                        height: 220,
+                        child: Center(
+                          child: Text(
+                            'Conclua treinos para gerar seu mapa muscular.',
+                          ),
+                        ),
+                      )
+                    : RadarChart(attributes: data),
               ),
             ),
           ),
           const SizedBox(height: 28),
-          const SectionHeading('Modalidades', eyebrow: 'Todas as categorias'),
+          const SectionHeading('Modalidades', eyebrow: 'Aguardando dados'),
           const SizedBox(height: 12),
           Card(
             child: Padding(
@@ -97,30 +103,29 @@ class ProfileScreen extends ConsumerWidget {
                     child: Text('Não foi possível carregar o gráfico.'),
                   ),
                 ),
-                data: (data) => RadarChart(attributes: data),
+                data: (data) => data.isEmpty
+                    ? const SizedBox(
+                        height: 220,
+                        child: Center(
+                          child: Text(
+                            'Registre atividades para gerar seu gráfico.',
+                          ),
+                        ),
+                      )
+                    : RadarChart(attributes: data),
               ),
             ),
           ),
           const SizedBox(height: 28),
-          const SectionHeading('Histórico', eyebrow: 'Atividade recente'),
+          const SectionHeading('Histórico', eyebrow: 'Nenhum registro'),
           const SizedBox(height: 12),
           const Card(
-            child: Column(
-              children: [
-                ListTile(
-                  leading: Icon(Icons.fitness_center),
-                  title: Text('Peito + tríceps'),
-                  subtitle: Text('Ontem · 52 min'),
-                  trailing: Text('+4 pts'),
-                ),
-                Divider(height: 1),
-                ListTile(
-                  leading: Icon(Icons.directions_run),
-                  title: Text('Corrida leve'),
-                  subtitle: Text('Há 3 dias · 5,2 km'),
-                  trailing: Text('+2 pts'),
-                ),
-              ],
+            child: ListTile(
+              leading: Icon(Icons.history_toggle_off),
+              title: Text('Nenhum treino ou atividade registrado'),
+              subtitle: Text(
+                'Seu histórico aparecerá aqui após o primeiro registro.',
+              ),
             ),
           ),
           const SizedBox(height: 18),

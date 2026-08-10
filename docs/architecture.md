@@ -13,7 +13,7 @@ O aplicativo é 100% Flutter/Dart, mobile-first e preparado para Android e iOS. 
 
 ## Dependências e fluxo
 
-Os widgets consomem providers Riverpod. Providers expõem contratos de repositório, hoje implementados por `MockAppRepository` ou `LocalOnboardingRepository`. A apresentação não conhece banco, API ou detalhes de armazenamento.
+Os widgets consomem providers Riverpod. Providers expõem contratos de repositório, hoje implementados por `LocalAppRepository` ou `LocalOnboardingRepository`. Ele inicia vazio e só contém dados criados durante a sessão. A apresentação não conhece banco, API ou detalhes de armazenamento. O PostgreSQL local `limitbreaker` já possui migrações em `database/migrations/`; a conexão será feita por API autenticada, nunca diretamente pelo aplicativo Flutter.
 
 GoRouter declara o fluxo `/` → `/welcome` ou `/home`; as rotas principais usam uma navegação inferior com Início, Ranking, Amigos, Conquistas e Perfil. Não existe barra lateral.
 
@@ -27,3 +27,4 @@ O sistema visual fica em `app/theme/app_theme.dart` e centraliza cores, espaçam
 - Adicionar estados tipados de aplicação para edição de treinos e atividades.
 - Definir backend e autenticação somente após decisão técnica explícita.
 - Manter saúde isolada, sem logs de respostas sensíveis e sem analytics desses campos.
+- Implementar Google Auth na Fase 4 via Supabase Auth. O Client Secret OAuth ficará exclusivamente no provedor/backend; o Flutter nunca o armazenará.
