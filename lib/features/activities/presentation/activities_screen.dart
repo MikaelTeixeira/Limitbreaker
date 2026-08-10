@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/app_theme.dart';
 import '../../../core/widgets/brand_widgets.dart';
+import '../../../shared/models/models.dart';
 import '../../../shared/repositories/repositories.dart';
+import '../domain/pace_calculator.dart';
 
 class ActivitiesScreen extends ConsumerStatefulWidget {
   const ActivitiesScreen({super.key});
@@ -26,11 +28,14 @@ class _ActivitiesScreenState extends ConsumerState<ActivitiesScreen> {
 
   Future<void> _save() async {
     final distance = double.tryParse(_distance.text.replaceAll(',', '.'));
+    final distanceKm = _category == 'swimming' && distance != null
+        ? distance / 1000
+        : distance;
     final minutes = int.tryParse(_duration.text);
     final intensity = int.tryParse(_intensity.text);
     if (minutes == null ||
         minutes <= 0 ||
-        (distance != null && distance < 0) ||
+        (distanceKm != null && distanceKm < 0) ||
         (intensity != null && (intensity < 1 || intensity > 10))) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -45,7 +50,7 @@ class _ActivitiesScreenState extends ConsumerState<ActivitiesScreen> {
           categoryId: _category,
           performedAt: DateTime.now(),
           duration: Duration(minutes: minutes),
-          distanceKm: distance,
+          distanceKm: distanceKm,
           intensity: intensity,
         );
     ref.invalidate(activitiesProvider);
@@ -73,6 +78,7 @@ class _ActivitiesScreenState extends ConsumerState<ActivitiesScreen> {
             items: const [
               DropdownMenuItem(value: 'running', child: Text('Corrida')),
               DropdownMenuItem(value: 'cycling', child: Text('Ciclismo')),
+              DropdownMenuItem(value: 'swimming', child: Text('Natação')),
               DropdownMenuItem(value: 'mobility', child: Text('Mobilidade')),
             ],
             onChanged: (value) => setState(() => _category = value!),
@@ -94,8 +100,10 @@ class _ActivitiesScreenState extends ConsumerState<ActivitiesScreen> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  decoration: const InputDecoration(
-                    labelText: 'Distância (km)',
+                  decoration: InputDecoration(
+                    labelText: _category == 'swimming'
+                        ? 'Distância nadada (m)'
+                        : 'Distância (km)',
                   ),
                 ),
               ),
@@ -163,7 +171,7 @@ class _ActivitiesScreenState extends ConsumerState<ActivitiesScreen> {
                             leading: const Icon(Icons.directions_run),
                             title: Text(item.categoryId.toUpperCase()),
                             subtitle: Text(
-                              '${item.duration?.inMinutes ?? 0} min · intensidade ${item.intensity ?? '-'}',
+                              '${item.duration?.inMinutes ?? 0} min · intensidade ${item.intensity ?? '-'}${_pace(item) == null ? '' : ' · pace ${_pace(item)}'}',
                             ),
                             trailing: Text(
                               item.distanceKm == null
@@ -179,4 +187,10 @@ class _ActivitiesScreenState extends ConsumerState<ActivitiesScreen> {
       ),
     );
   }
+
+  String? _pace(ActivitySession item) => PaceCalculator.format(
+    categoryId: item.categoryId,
+    duration: item.duration,
+    distanceKm: item.distanceKm,
+  );
 }

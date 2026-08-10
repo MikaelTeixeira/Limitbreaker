@@ -25,6 +25,7 @@
 - Fase 3: convites locais, amizades, chat demonstrativo e conquistas completas.
 - Fase 4: implementar login e cadastro por e-mail, seguido de Google Auth assim que o projeto Supabase e as credenciais OAuth estiverem disponíveis.
 - Fase 4: conectar o Flutter a uma API local autenticada para persistir o onboarding e as sugestões no PostgreSQL.
+- Sugestão de treino: usar rotinas pré-definidas conforme as preferências até a contratação de uma chave de API; depois substituir por IA via backend, sem chave no Flutter.
 
 ## Planejado — Próximas fases
 

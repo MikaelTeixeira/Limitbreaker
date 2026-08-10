@@ -212,6 +212,55 @@ class Exercise {
   final String muscleGroup;
 }
 
+enum TrainingCategory { strength, running, cycling, swimming }
+
+extension TrainingCategoryDetails on TrainingCategory {
+  String get label => switch (this) {
+    TrainingCategory.strength => 'Musculação',
+    TrainingCategory.running => 'Corrida',
+    TrainingCategory.cycling => 'Ciclismo',
+    TrainingCategory.swimming => 'Natação',
+  };
+}
+
+enum StrengthMuscleGroup {
+  chest,
+  shoulders,
+  legs,
+  biceps,
+  triceps,
+  abdomen,
+  back,
+}
+
+extension StrengthMuscleGroupDetails on StrengthMuscleGroup {
+  String get label => switch (this) {
+    StrengthMuscleGroup.chest => 'Peito',
+    StrengthMuscleGroup.shoulders => 'Ombro',
+    StrengthMuscleGroup.legs => 'Pernas',
+    StrengthMuscleGroup.biceps => 'Bíceps',
+    StrengthMuscleGroup.triceps => 'Tríceps',
+    StrengthMuscleGroup.abdomen => 'Abdômen',
+    StrengthMuscleGroup.back => 'Costas',
+  };
+}
+
+class StrengthExerciseLog {
+  const StrengthExerciseLog({
+    required this.id,
+    required this.exerciseId,
+    required this.loadKg,
+    required this.repetitions,
+    required this.performedAt,
+  });
+
+  final String id;
+  final String exerciseId;
+  final double loadKg;
+  final int repetitions;
+  final DateTime performedAt;
+}
+
 class ExerciseSet {
   const ExerciseSet({
     required this.repetitions,

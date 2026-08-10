@@ -69,12 +69,13 @@ class DashboardScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 18),
                               FilledButton.tonal(
-                                onPressed: () => context.push('/workouts'),
+                                onPressed: () =>
+                                    context.push('/suggest-workout'),
                                 style: FilledButton.styleFrom(
                                   backgroundColor: AppColors.voidBlack,
                                   foregroundColor: AppColors.bone,
                                 ),
-                                child: const Text('VER TREINOS'),
+                                child: const Text('SUGERIR TREINO'),
                               ),
                             ],
                           )

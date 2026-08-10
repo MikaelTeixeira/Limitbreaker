@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/achievements/presentation/achievements_screen.dart';
 import '../../features/activities/presentation/activities_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
+import '../../features/exercises/presentation/exercises_screen.dart';
 import '../../features/friends/presentation/friends_screen.dart';
 import '../../features/onboarding/presentation/entry_screens.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
@@ -11,6 +12,7 @@ import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/ranking/presentation/ranking_screen.dart';
 import '../../features/shell/presentation/main_shell.dart';
 import '../../features/workouts/presentation/workouts_screens.dart';
+import '../../features/workouts/presentation/suggested_workout_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>(
   (ref) => GoRouter(
@@ -20,7 +22,12 @@ final appRouterProvider = Provider<GoRouter>(
       GoRoute(path: '/welcome', builder: (_, _) => const WelcomeScreen()),
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
       GoRoute(path: '/workouts', builder: (_, _) => const WorkoutsScreen()),
+      GoRoute(
+        path: '/suggest-workout',
+        builder: (_, _) => const SuggestedWorkoutScreen(),
+      ),
       GoRoute(path: '/activities', builder: (_, _) => const ActivitiesScreen()),
+      GoRoute(path: '/exercises', builder: (_, _) => const ExercisesScreen()),
       GoRoute(
         path: '/workouts/:planId',
         builder: (_, state) =>

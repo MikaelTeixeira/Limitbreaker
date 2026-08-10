@@ -27,3 +27,7 @@ O perfil de treino é uma classificação de produto baseada em respostas autorr
 ## ADR-007 — PostgreSQL atrás de uma API local
 
 O PostgreSQL local é o armazenamento de desenvolvimento. O Flutter não se conecta a ele diretamente, pois isso exporia credenciais no APK e impediria controles de autorização. Uma API local autenticada fará a ponte até a futura migração para Supabase.
+
+## ADR-008 — Sugestões pré-definidas antes de IA
+
+Enquanto não houver uma chave de API e um backend seguro, as sugestões de treino usam rotinas pré-definidas e explicáveis com base na modalidade escolhida. A futura IA será chamada exclusivamente pelo backend; sua chave não será incluída no Flutter.
