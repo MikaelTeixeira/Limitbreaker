@@ -1,17 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:limit_breaker/app/app.dart';
+import 'package:limit_breaker/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:limit_breaker/features/shell/presentation/main_shell.dart';
-import 'package:limit_breaker/shared/repositories/repositories.dart';
-
-class _CompletedOnboarding implements OnboardingRepository {
-  @override
-  Future<void> complete() async {}
-
-  @override
-  Future<bool> isComplete() async => true;
-}
+import 'package:limit_breaker/app/theme/app_theme.dart';
 
 void main() {
   testWidgets('Dashboard mobile mantém referência visual', (tester) async {
@@ -19,15 +11,12 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          onboardingRepositoryProvider.overrideWithValue(
-            _CompletedOnboarding(),
-          ),
-        ],
-        child: const LimitBreakerApp(),
+        child: MaterialApp(
+          theme: AppTheme.dark,
+          home: const MainShell(index: 0, child: DashboardScreen()),
+        ),
       ),
     );
-    await tester.tap(find.byType(GestureDetector).first);
     await tester.pumpAndSettle();
     await expectLater(
       find.byType(MainShell),

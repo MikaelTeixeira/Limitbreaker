@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_theme.dart';
 import '../../../core/widgets/brand_widgets.dart';
-import '../../../shared/repositories/repositories.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -33,8 +32,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _leaving = true;
     await _controller.reverse();
     if (!mounted) return;
-    final complete = await ref.read(onboardingRepositoryProvider).isComplete();
-    if (mounted) context.go(complete ? '/home' : '/welcome');
+    if (mounted) context.go('/login');
   }
 
   @override

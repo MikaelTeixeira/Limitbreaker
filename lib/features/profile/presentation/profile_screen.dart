@@ -12,6 +12,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final muscles = ref.watch(muscleAttributesProvider);
     final categories = ref.watch(categoryAttributesProvider);
+    final achievements = ref.watch(achievementsProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('PERFIL'),
@@ -127,6 +128,39 @@ class ProfileScreen extends ConsumerWidget {
                 'Seu histórico aparecerá aqui após o primeiro registro.',
               ),
             ),
+          ),
+          const SizedBox(height: 28),
+          const SectionHeading('Conquistas', eyebrow: 'Registros liberados'),
+          const SizedBox(height: 12),
+          achievements.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, _) => const Card(
+              child: ListTile(
+                title: Text('Não foi possível carregar as conquistas.'),
+              ),
+            ),
+            data: (items) => items.isEmpty
+                ? const Card(
+                    child: ListTile(
+                      leading: Icon(Icons.military_tech_outlined),
+                      title: Text('Nenhuma conquista liberada'),
+                      subtitle: Text(
+                        'As conquistas aparecerão aqui após serem alcançadas.',
+                      ),
+                    ),
+                  )
+                : Column(
+                    children: items
+                        .map(
+                          (item) => Card(
+                            child: ListTile(
+                              leading: const Icon(Icons.military_tech_outlined),
+                              title: Text(item.title),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
           ),
           const SizedBox(height: 18),
         ],

@@ -41,6 +41,18 @@ abstract final class ExerciseCatalog {
         muscleGroup: 'Pernas',
       ),
     ],
+    StrengthMuscleGroup.forearms: [
+      Exercise(
+        id: 'wrist_curl',
+        name: 'Rosca de punho',
+        muscleGroup: 'Antebra\u00e7o',
+      ),
+      Exercise(
+        id: 'reverse_wrist_curl',
+        name: 'Rosca de punho inversa',
+        muscleGroup: 'Antebra\u00e7o',
+      ),
+    ],
     StrengthMuscleGroup.biceps: [
       Exercise(id: 'barbell_curl', name: 'Rosca direta', muscleGroup: 'Bíceps'),
       Exercise(id: 'hammer_curl', name: 'Rosca martelo', muscleGroup: 'Bíceps'),

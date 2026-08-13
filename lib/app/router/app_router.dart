@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/achievements/presentation/achievements_screen.dart';
+import '../../features/auth/presentation/access_screens.dart';
 import '../../features/activities/presentation/activities_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/exercises/presentation/exercises_screen.dart';
@@ -12,7 +12,9 @@ import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/ranking/presentation/ranking_screen.dart';
 import '../../features/shell/presentation/main_shell.dart';
 import '../../features/workouts/presentation/workouts_screens.dart';
+import '../../features/workouts/presentation/workout_registration_screen.dart';
 import '../../features/workouts/presentation/suggested_workout_screen.dart';
+import '../../shared/models/models.dart';
 
 final appRouterProvider = Provider<GoRouter>(
   (ref) => GoRouter(
@@ -20,8 +22,21 @@ final appRouterProvider = Provider<GoRouter>(
     routes: [
       GoRoute(path: '/', builder: (_, _) => const SplashScreen()),
       GoRoute(path: '/welcome', builder: (_, _) => const WelcomeScreen()),
+      GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+      GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
-      GoRoute(path: '/workouts', builder: (_, _) => const WorkoutsScreen()),
+      GoRoute(
+        path: '/workouts',
+        builder: (_, _) => const MainShell(index: 3, child: WorkoutsScreen()),
+      ),
+      GoRoute(
+        path: '/workouts/register',
+        builder: (_, state) => WorkoutRegistrationScreen(
+          initialCategory: state.uri.queryParameters['category'] == 'strength'
+              ? TrainingCategory.strength
+              : null,
+        ),
+      ),
       GoRoute(
         path: '/suggest-workout',
         builder: (_, _) => const SuggestedWorkoutScreen(),
@@ -44,11 +59,6 @@ final appRouterProvider = Provider<GoRouter>(
       GoRoute(
         path: '/friends',
         builder: (_, _) => const MainShell(index: 2, child: FriendsScreen()),
-      ),
-      GoRoute(
-        path: '/achievements',
-        builder: (_, _) =>
-            const MainShell(index: 3, child: AchievementsScreen()),
       ),
       GoRoute(
         path: '/profile',

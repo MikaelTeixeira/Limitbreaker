@@ -18,7 +18,7 @@ class SportPriorityCarousel extends StatefulWidget {
 }
 
 class _SportPriorityCarouselState extends State<SportPriorityCarousel> {
-  final _controller = PageController(viewportFraction: .82);
+  final _controller = PageController(viewportFraction: .72);
   var _currentIndex = 0;
 
   @override
@@ -42,7 +42,7 @@ class _SportPriorityCarouselState extends State<SportPriorityCarousel> {
     return Column(
       children: [
         SizedBox(
-          height: 280,
+          height: 188,
           child: PageView.builder(
             controller: _controller,
             itemCount: SportType.values.length,
@@ -65,7 +65,10 @@ class _SportPriorityCarouselState extends State<SportPriorityCarousel> {
                         child: Container(
                           width: double.infinity,
                           color: Colors.black.withValues(alpha: .72),
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           child: Text(
                             item.label.toUpperCase(),
                             style: Theme.of(context).textTheme.titleLarge,
@@ -79,7 +82,7 @@ class _SportPriorityCarouselState extends State<SportPriorityCarousel> {
             },
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 10),
         Text(
           'Escolhido: ${sport.label}',
           style: const TextStyle(fontWeight: FontWeight.w800),
@@ -88,7 +91,7 @@ class _SportPriorityCarouselState extends State<SportPriorityCarousel> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          alignment: WrapAlignment.center,
+          alignment: WrapAlignment.start,
           children: List.generate(3, (index) {
             const labels = [
               'PRIMÁRIO · 75%',

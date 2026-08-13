@@ -1,0 +1,11 @@
+name: limit_breaker_local_api
+publish_to: none
+environment:
+  sdk: ^3.12.2
+dependencies:
+  bcrypt: ^1.2.0
+  crypto: ^3.0.6
+  http: ^1.6.0
+  postgres: ^3.5.12
+  shelf: ^1.4.2
+  shelf_router: ^1.1.4

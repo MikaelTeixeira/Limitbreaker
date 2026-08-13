@@ -14,7 +14,7 @@ class _MemoryOnboardingRepository implements OnboardingRepository {
 }
 
 void main() {
-  testWidgets('primeiro acesso abre boas-vindas após toque', (tester) async {
+  testWidgets('primeiro acesso abre Login após toque', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -28,11 +28,11 @@ void main() {
     expect(find.text('SUPERE.\nREGISTRE.\nEVOLUA.'), findsOneWidget);
     await tester.tap(find.byType(GestureDetector).first);
     await tester.pumpAndSettle();
-    expect(find.text('BEM-VINDO AO\nLIMIT BREAKER'), findsOneWidget);
-    expect(find.text('COMEÇAR'), findsOneWidget);
+    expect(find.text('ENTRE NO\nLIMIT BREAKER'), findsOneWidget);
+    expect(find.text('Nome de usuário ou e-mail'), findsOneWidget);
   });
 
-  testWidgets('usuário concluído entra no Dashboard e navega pelo rodapé', (
+  testWidgets('usuário concluído também abre Login sem sessão real', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -47,10 +47,7 @@ void main() {
     );
     await tester.tap(find.byType(GestureDetector).first);
     await tester.pumpAndSettle();
-    expect(find.text('BOM DIA, ATLETA.'), findsOneWidget);
-    await tester.tap(find.text('Ranking').last);
-    await tester.pumpAndSettle();
-    expect(find.text('SEM PONTUAÇÃO AINDA'), findsOneWidget);
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.text('ENTRE NO\nLIMIT BREAKER'), findsOneWidget);
+    expect(find.text('Nome de usuário ou e-mail'), findsOneWidget);
   });
 }

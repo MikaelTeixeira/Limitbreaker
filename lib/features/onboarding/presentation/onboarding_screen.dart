@@ -114,6 +114,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         'ETAPA ${_page + 1} / 7',
         style: Theme.of(context).textTheme.labelSmall,
       ),
+      actions: [TextButton(onPressed: _confirmExit, child: const Text('SAIR'))],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(2),
         child: LinearProgressIndicator(
@@ -288,6 +289,27 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       ),
     ),
   );
+
+  Future<void> _confirmExit() async {
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sair do cadastro?'),
+        content: const Text('As informações desta etapa não serão salvas.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('CONTINUAR'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('SAIR'),
+          ),
+        ],
+      ),
+    );
+    if (shouldExit == true && mounted) context.go('/login');
+  }
 }
 
 String? _positive(String? value) =>
@@ -303,7 +325,7 @@ String? _emailValidator(String? value) {
       : 'Informe um e-mail válido.';
 }
 
-class _Step extends StatelessWidget {
+class _Step extends StatefulWidget {
   const _Step({
     required this.title,
     required this.subtitle,
@@ -312,20 +334,77 @@ class _Step extends StatelessWidget {
   final String title;
   final String subtitle;
   final Widget child;
+
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    padding: const EdgeInsets.all(AppSpacing.lg),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 18),
-        Text(title, style: Theme.of(context).textTheme.displayMedium),
-        const SizedBox(height: 10),
-        Text(subtitle),
-        const SizedBox(height: 28),
-        child,
-      ],
-    ),
+  State<_Step> createState() => _StepState();
+}
+
+class _StepState extends State<_Step> {
+  final _scrollController = ScrollController();
+  var _canScrollDown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_updateScrollState);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updateScrollState());
+  }
+
+  void _updateScrollState() {
+    if (!_scrollController.hasClients) return;
+    final canScroll =
+        _scrollController.position.pixels <
+        _scrollController.position.maxScrollExtent - 8;
+    if (canScroll != _canScrollDown && mounted) {
+      setState(() => _canScrollDown = canScroll);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_updateScrollState)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Stack(
+    children: [
+      SingleChildScrollView(
+        controller: _scrollController,
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 18),
+            Text(
+              widget.title,
+              style: Theme.of(context).textTheme.displayMedium,
+            ),
+            const SizedBox(height: 10),
+            Text(widget.subtitle),
+            const SizedBox(height: 28),
+            widget.child,
+            const SizedBox(height: 80),
+          ],
+        ),
+      ),
+      if (_canScrollDown)
+        Positioned(
+          right: AppSpacing.lg,
+          bottom: AppSpacing.lg,
+          child: FloatingActionButton.small(
+            tooltip: 'Ir para o fim da página',
+            onPressed: () => _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOut,
+            ),
+            child: const Icon(Icons.keyboard_arrow_down),
+          ),
+        ),
+    ],
   );
 }
 

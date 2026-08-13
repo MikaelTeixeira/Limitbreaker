@@ -11,7 +11,7 @@ class MainShell extends StatelessWidget {
     '/home',
     '/ranking',
     '/friends',
-    '/achievements',
+    '/workouts',
     '/profile',
   ];
 
@@ -41,9 +41,9 @@ class MainShell extends StatelessWidget {
           label: 'Amigos',
         ),
         NavigationDestination(
-          icon: Icon(Icons.military_tech_outlined),
-          selectedIcon: Icon(Icons.military_tech),
-          label: 'Conquistas',
+          icon: Icon(Icons.fitness_center_outlined),
+          selectedIcon: Icon(Icons.fitness_center),
+          label: 'Treinos',
         ),
         NavigationDestination(
           icon: Icon(Icons.person_outline),

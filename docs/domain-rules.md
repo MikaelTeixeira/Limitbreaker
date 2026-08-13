@@ -29,10 +29,13 @@
 
 ## Treinos e atividades
 
+- Textos que se dirigem à pessoa devem usar seu primeiro nome; termos genéricos como “Atleta” e “Usuário” não são usados como forma de tratamento.
 - Uma sessão é iniciada a partir de uma rotina e permanece local, em memória, nesta etapa.
 - A conclusão registra séries, repetições, carga, duração e observação opcional.
 - Séries devem possuir pelo menos uma repetição; carga não pode ser negativa.
 - Encerrar uma sessão inexistente é um erro explícito, nunca um registro silencioso.
+- O lançamento manual de musculação exige grupo muscular, ao menos um exercício, séries, repetições e carga. A lista de exercícios é apenas um catálogo de referência; um exercício não entra no histórico até a confirmação de “Finalizar treino”.
+- Corrida e ciclismo exigem duração e pace no formato min:seg/km. Natação exige duração e distância em metros.
 - Histórico, recordes e atividades esportivas ainda estão em desenvolvimento nesta Fase 2.
 
 ## Privacidade

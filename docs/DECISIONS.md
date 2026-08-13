@@ -31,3 +31,7 @@ O PostgreSQL local é o armazenamento de desenvolvimento. O Flutter não se cone
 ## ADR-008 — Sugestões pré-definidas antes de IA
 
 Enquanto não houver uma chave de API e um backend seguro, as sugestões de treino usam rotinas pré-definidas e explicáveis com base na modalidade escolhida. A futura IA será chamada exclusivamente pelo backend; sua chave não será incluída no Flutter.
+
+## ADR-009 — Interface de acesso sem autenticação simulada
+
+Login e Registro existem como entradas de navegação durante os testes, mas não criam sessão, não aceitam senha e não afirmam autenticação. A persistência por usuário e qualquer gravação de dados sensíveis permanecem bloqueadas até a configuração de um provedor de identidade real.

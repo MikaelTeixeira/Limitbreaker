@@ -36,7 +36,7 @@ class DashboardScreen extends ConsumerWidget {
           sliver: SliverList.list(
             children: [
               Text(
-                'BOM DIA, ATLETA.',
+                'BOM DIA, MIKAEL.',
                 style: Theme.of(context).textTheme.displayMedium,
               ),
               const SizedBox(height: 6),
@@ -194,7 +194,7 @@ class DashboardScreen extends ConsumerWidget {
                               const SizedBox(height: 5),
                               Text(
                                 result.totalScore == null
-                                    ? 'Você é a primeira pessoa cadastrada. Registre um treino para pontuar.'
+                                    ? 'Primeira pessoa cadastrada. Registre um treino para pontuar.'
                                     : '${result.totalScore!.toStringAsFixed(1)} pontos · ${result.rankedCategories.first.category.name}',
                               ),
                             ],

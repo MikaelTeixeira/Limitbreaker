@@ -47,3 +47,11 @@
 - Adicionado carrossel de modalidades no onboarding, com seleção obrigatória e sem repetição para os pesos 75/15/10.
 - Adicionadas ilustrações temporárias geradas por IA em preto e branco para musculação, corrida, ciclismo, natação, futebol e lutas.
 - Incluído campo obrigatório de e-mail no onboarding; o esquema PostgreSQL já garante unicidade por perfil.
+
+## 2026-08-11 — Registro manual de treinos
+
+- A navegação inferior substituiu Conquistas por Treinos, com ícone de halter. Conquistas permanecem disponíveis na seção Perfil.
+- Criado fluxo de lançamento manual: escolha de modalidade, pace para corrida/ciclismo, distância para natação e montagem de musculação por grupo muscular.
+- A musculação permite pesquisar no catálogo, adicionar exercícios e informar séries, repetições e carga antes de finalizar. Antebraço foi incluído entre os grupos musculares.
+- As imagens de execução permanecem explicitamente marcadas como “Imagem pendente” até a entrega das fotos reais.
+- Nenhum treino é criado por demonstração: o histórico só é atualizado após “Finalizar treino”. Nesta fatia, os lançamentos ainda vivem no repositório local em memória; a persistência pelo servidor PostgreSQL continua como próximo passo de backend.

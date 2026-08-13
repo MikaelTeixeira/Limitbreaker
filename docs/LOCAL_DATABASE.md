@@ -25,3 +25,16 @@ Com uma sessão administrativa do PostgreSQL:
 ```
 
 Não inclua a senha no comando, em arquivos versionados ou no aplicativo.
+
+## API local de desenvolvimento
+
+A ponte fica em `server/` e é o único componente que pode receber `DATABASE_URL`. O Flutter não recebe essa variável.
+
+```powershell
+Set-Location server
+dart pub get
+$env:DATABASE_URL='postgresql://USUARIO:SENHA@127.0.0.1:5432/limitbreaker'
+dart run bin/server.dart
+```
+
+Use `http://127.0.0.1:8080/health` para verificar a integração PostgreSQL. A API inicial expõe somente verificação e leitura de perfil; gravação e vínculo por usuário dependem da autenticação real.

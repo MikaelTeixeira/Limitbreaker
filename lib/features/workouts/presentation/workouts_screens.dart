@@ -19,7 +19,26 @@ class WorkoutsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
-          const SectionHeading('Sua rotina', eyebrow: 'Dados locais'),
+          const SectionHeading('Registrar', eyebrow: 'Novo lançamento'),
+          const SizedBox(height: 12),
+          _ActionCard(
+            icon: Icons.add_circle_outline,
+            title: 'Registrar treino',
+            subtitle: 'Corrida, musculação, ciclismo ou natação',
+            onTap: () => context.push('/workouts/register'),
+          ),
+          const SizedBox(height: 8),
+          _ActionCard(
+            icon: Icons.fitness_center_outlined,
+            title: 'Registrar carga',
+            subtitle: 'Inclua exercícios, séries, repetições e carga',
+            onTap: () => context.push('/workouts/register?category=strength'),
+          ),
+          const SizedBox(height: 28),
+          const SectionHeading(
+            'Rotinas sugeridas',
+            eyebrow: 'Quando disponíveis',
+          ),
           const SizedBox(height: 12),
           plans.when(
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -331,6 +350,32 @@ class _ExerciseInput extends StatelessWidget {
           ],
         ),
       ),
+    ),
+  );
+}
+
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    child: ListTile(
+      minTileHeight: 80,
+      leading: Icon(icon, color: AppColors.frost),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+      subtitle: Text(subtitle),
+      trailing: const Icon(Icons.arrow_forward),
+      onTap: onTap,
     ),
   );
 }
