@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/app_theme.dart';
 import '../../../core/widgets/brand_widgets.dart';
+import '../../../shared/data/local_api.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/repositories/repositories.dart';
 import '../../exercises/data/exercise_catalog.dart';
@@ -49,24 +50,26 @@ class _WorkoutRegistrationScreenState
       );
       return;
     }
-    final now = DateTime.now();
-    final plan = WorkoutPlan(
-      id: 'manual-${now.millisecondsSinceEpoch}',
-      name: 'Musculação',
-      groups: _exercises
-          .map((item) => item.exercise.muscleGroup)
-          .toSet()
-          .toList(),
-      exerciseCount: _exercises.length,
-    );
-    final repository = ref.read(workoutRepositoryProvider);
-    final session = await repository.startWorkout(plan, now);
-    await repository.completeWorkout(
-      session.id,
-      duration: Duration.zero,
-      exercises: _exercises.map((item) => item.toPerformedExercise()).toList(),
-      completedAt: now,
-    );
+    try {
+      await LocalApi.instance.createWorkout({
+        'category': 'strength',
+        'durationSeconds': 0,
+        'exercises': _exercises
+            .map(
+              (item) => {
+                'name': item.exercise.name,
+                'muscleGroup': item.exercise.muscleGroup,
+                'sets': int.parse(item.sets.text),
+                'repetitions': int.parse(item.repetitions.text),
+                'loadKg': double.parse(item.load.text.replaceAll(',', '.')),
+              },
+            )
+            .toList(),
+      });
+    } on LocalApiException catch (error) {
+      _message(error.message);
+      return;
+    }
     ref.invalidate(workoutSessionsProvider);
     if (mounted) Navigator.of(context).pop();
   }
@@ -95,14 +98,16 @@ class _WorkoutRegistrationScreenState
       }
       distanceKm = metres / 1000;
     }
-    await ref
-        .read(appRepositoryProvider)
-        .addActivity(
-          categoryId: category.name,
-          performedAt: DateTime.now(),
-          duration: Duration(minutes: minutes),
-          distanceKm: distanceKm,
-        );
+    try {
+      await LocalApi.instance.createWorkout({
+        'category': category.name,
+        'durationSeconds': minutes * 60,
+        'distanceMeters': distanceKm * 1000,
+      });
+    } on LocalApiException catch (error) {
+      _message(error.message);
+      return;
+    }
     ref.invalidate(activitiesProvider);
     ref.invalidate(personalRecordsProvider);
     if (mounted) Navigator.of(context).pop();
@@ -362,16 +367,20 @@ class _PendingImage extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     width: 56,
     height: 56,
-    color: AppColors.graphite,
+    color: AppColors.bone,
     alignment: Alignment.center,
     child: const Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.image_outlined, size: 18),
+        Icon(Icons.image_outlined, size: 18, color: AppColors.steel),
         Text(
           'IMAGEM\nPENDENTE',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 7, fontWeight: FontWeight.w800),
+          style: TextStyle(
+            fontSize: 7,
+            fontWeight: FontWeight.w800,
+            color: AppColors.steel,
+          ),
         ),
       ],
     ),

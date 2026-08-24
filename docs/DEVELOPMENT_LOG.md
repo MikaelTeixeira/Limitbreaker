@@ -55,3 +55,36 @@
 - A musculação permite pesquisar no catálogo, adicionar exercícios e informar séries, repetições e carga antes de finalizar. Antebraço foi incluído entre os grupos musculares.
 - As imagens de execução permanecem explicitamente marcadas como “Imagem pendente” até a entrega das fotos reais.
 - Nenhum treino é criado por demonstração: o histórico só é atualizado após “Finalizar treino”. Nesta fatia, os lançamentos ainda vivem no repositório local em memória; a persistência pelo servidor PostgreSQL continua como próximo passo de backend.
+
+## 2026-08-17 — Persistência local concluída
+
+- Aplicada migração de sessões, treinos, exercícios, séries e cargas no PostgreSQL local.
+- Implementada API local autenticada para cadastro, login e lançamentos de treino; senhas usam bcrypt, tokens de sessão são aleatórios e apenas seus hashes são persistidos.
+- O Flutter envia o cadastro/login à API e usa armazenamento seguro do dispositivo para o token. “Finalizar treino” envia musculação, corrida, ciclismo ou natação ao PostgreSQL, sem dados de demonstração.
+- Histórico de treinos consulta a API local. `flutter test` e a checagem de conexão da API com PostgreSQL foram concluídos com sucesso.
+
+## 2026-08-17 — Estágios de Ranking
+
+- Definidos e implementados 15 estágios: Bronze, Prata, Ouro, Diamante e Platina, cada um em I, II e III.
+- A apresentação usa a escala normalizada provisória de 0–100, dividida em faixas iguais até que a normalização oficial por modalidade seja definida.
+
+## 2026-08-17 — Catálogo de exercícios
+
+- Criadas as tabelas `exercise_categories` e `exercises`, com chave estrangeira, restrições de unicidade e índices de consulta.
+- Incluídos 86 exercícios de academia em 10 categorias, sem inserir exercícios, treinos ou contas fictícias.
+
+## 2026-08-17 — Contas locais
+
+- Criada a tabela `users` como fonte de autenticação local, separada do perfil físico e com vínculo opcional via chave estrangeira.
+- Inserida a conta local solicitada para Mikael Teixeira; apenas o hash bcrypt da senha foi armazenado.
+
+## 2026-08-17 — Fluxo único de cadastro
+
+- Removida a tela duplicada de dados básicos antes do onboarding.
+- O cadastro abre diretamente o onboarding, cuja primeira etapa reúne nome de exibição, e-mail, nome de usuário, senha, idade, altura em cm e peso em kg.
+
+## 2026-08-17 — Administração local
+
+- Adicionado tipo de conta `standard`/`administrator`, estado de ativação e sessões vinculadas à conta.
+- Mikael Teixeira foi configurado como administrador.
+- Criado painel administrativo exclusivo para criar eventos, administrar exercícios e ativar/desativar contas, promover/rebaixar administradores e redefinir senhas.

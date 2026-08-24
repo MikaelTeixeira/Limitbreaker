@@ -32,6 +32,14 @@ O PostgreSQL local é o armazenamento de desenvolvimento. O Flutter não se cone
 
 Enquanto não houver uma chave de API e um backend seguro, as sugestões de treino usam rotinas pré-definidas e explicáveis com base na modalidade escolhida. A futura IA será chamada exclusivamente pelo backend; sua chave não será incluída no Flutter.
 
-## ADR-009 — Interface de acesso sem autenticação simulada
+## ADR-009 — Acesso local manual antes de OAuth
 
-Login e Registro existem como entradas de navegação durante os testes, mas não criam sessão, não aceitam senha e não afirmam autenticação. A persistência por usuário e qualquer gravação de dados sensíveis permanecem bloqueadas até a configuração de um provedor de identidade real.
+Cadastro e login locais usam nome de usuário ou e-mail e senha por uma API local. Senhas são armazenadas exclusivamente em hash bcrypt; o Flutter mantém somente o token de sessão no armazenamento seguro do dispositivo. Google OAuth permanece pendente de credenciais e callbacks próprios.
+
+## ADR-010 — Quinze estágios de Ranking
+
+O Ranking apresenta Bronze, Prata, Ouro, Diamante e Platina, cada qual com três estágios crescentes (I, II e III). Enquanto a normalização por modalidade estiver em evolução, as faixas usam a escala normalizada 0–100 dividida igualmente entre os 15 estágios.
+
+## ADR-011 — Administração autorizada pelo servidor
+
+O tipo de conta fica em `users.user_type`, com os papéis `standard` e `administrator`. A tela administrativa é separada da navegação comum, mas as operações críticas também exigem uma sessão de administrador validada na API.

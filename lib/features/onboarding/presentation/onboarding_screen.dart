@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_theme.dart';
+import '../../../shared/data/local_api.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/repositories/repositories.dart';
 import 'sport_priority_carousel.dart';
@@ -18,6 +19,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _email = TextEditingController();
+  final _username = TextEditingController();
+  final _password = TextEditingController();
   final _age = TextEditingController();
   final _height = TextEditingController();
   final _weight = TextEditingController();
@@ -43,6 +46,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _pageController.dispose();
     _name.dispose();
     _email.dispose();
+    _username.dispose();
+    _password.dispose();
     _age.dispose();
     _height.dispose();
     _weight.dispose();
@@ -50,11 +55,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   bool _validCurrent() {
-    if (_page == 0 && _goal == null) {
-      _message('Escolha seu objetivo principal.');
+    if (_page == 0 && !(_formKey.currentState?.validate() ?? false)) {
       return false;
     }
-    if (_page == 1 && !(_formKey.currentState?.validate() ?? false)) {
+    if (_page == 1 && _goal == null) {
+      _message('Escolha seu objetivo principal.');
       return false;
     }
     if (_page == 2 && _sports.any((sport) => sport == null)) {
@@ -91,6 +96,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         curve: Curves.easeOut,
       );
     } else {
+      try {
+        await LocalApi.instance.register(
+          username: _username.text.trim(),
+          email: _email.text.trim(),
+          displayName: _name.text.trim(),
+          password: _password.text,
+          age: int.parse(_age.text),
+          heightCm: double.parse(_height.text.replaceAll(',', '.')),
+          weightKg: double.parse(_weight.text.replaceAll(',', '.')),
+        );
+      } on LocalApiException catch (error) {
+        _message(error.message);
+        return;
+      } on FormatException {
+        _message('Confira idade, altura e peso.');
+        return;
+      }
       await ref.read(onboardingRepositoryProvider).complete();
       if (mounted) context.go('/home');
     }
@@ -135,31 +157,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               onPageChanged: (value) => setState(() => _page = value),
               children: [
                 _Step(
-                  title: 'QUAL É O SEU\nPRINCIPAL OBJETIVO?',
-                  subtitle: 'Isso ajuda a personalizar seu ponto de partida.',
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _goalLabels.entries
-                        .map(
-                          (entry) => ChoiceChip(
-                            label: Text(entry.value),
-                            selected: _goal == entry.key,
-                            onSelected: (_) =>
-                                setState(() => _goal = entry.key),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ),
-                _Step(
                   title: 'VAMOS COMEÇAR\nSUA JORNADA.',
                   subtitle:
-                      'Preencha o básico. Ajustes poderão ser feitos depois.',
+                      'Crie seu acesso e preencha seus dados básicos uma única vez.',
                   child: Form(
                     key: _formKey,
                     child: Column(
                       children: [
+                        TextFormField(
+                          controller: _name,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration(
+                            labelText: 'Nome de exibição',
+                          ),
+                          validator: (value) =>
+                              value == null || value.trim().length < 2
+                              ? 'Informe pelo menos 2 caracteres.'
+                              : null,
+                        ),
+                        const SizedBox(height: 10),
                         TextFormField(
                           controller: _email,
                           keyboardType: TextInputType.emailAddress,
@@ -172,13 +188,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         ),
                         const SizedBox(height: 10),
                         TextFormField(
-                          controller: _name,
+                          controller: _username,
                           decoration: const InputDecoration(
-                            labelText: 'Nome de exibição',
+                            labelText: 'Nome de usuário',
                           ),
                           validator: (value) =>
-                              value == null || value.trim().length < 2
-                              ? 'Informe pelo menos 2 caracteres.'
+                              value == null || value.trim().length < 3
+                              ? 'Informe pelo menos 3 caracteres.'
+                              : null,
+                        ),
+                        const SizedBox(height: 10),
+                        TextFormField(
+                          controller: _password,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Senha',
+                            hintText: 'Mínimo de 8 caracteres',
+                          ),
+                          validator: (value) =>
+                              value == null || value.length < 8
+                              ? 'A senha deve ter ao menos 8 caracteres.'
                               : null,
                         ),
                         const SizedBox(height: 10),
@@ -218,6 +247,24 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         ),
                       ],
                     ),
+                  ),
+                ),
+                _Step(
+                  title: 'QUAL É O SEU\nPRINCIPAL OBJETIVO?',
+                  subtitle: 'Isso ajuda a personalizar seu ponto de partida.',
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _goalLabels.entries
+                        .map(
+                          (entry) => ChoiceChip(
+                            label: Text(entry.value),
+                            selected: _goal == entry.key,
+                            onSelected: (_) =>
+                                setState(() => _goal = entry.key),
+                          ),
+                        )
+                        .toList(),
                   ),
                 ),
                 _Step(

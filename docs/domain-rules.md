@@ -20,6 +20,8 @@
 - Categorias adicionais permanecem visíveis, mas não alteram o total se estiverem fora do top 3.
 - Uma ou duas categorias geram resultado provisório, sem inventar redistribuição de pesos.
 - Pontuações de entrada são limitadas à escala 0–100 pelo normalizador provisório.
+- A escala oficial de apresentação possui 15 estágios, em ordem crescente: Bronze I, Bronze II, Bronze III, Prata I, Prata II, Prata III, Ouro I, Ouro II, Ouro III, Diamante I, Diamante II, Diamante III, Platina I, Platina II e Platina III.
+- Os 15 estágios dividem a pontuação normalizada 0–100 em faixas iguais de 6,6667 pontos. Platina III é o estágio máximo.
 
 ## Conquistas
 
@@ -43,3 +45,9 @@
 - Nenhuma resposta de saúde deve ser registrada em logs, analytics ou mensagens de erro.
 - O aplicativo não afirma conformidade jurídica definitiva nem substituição de profissionais.
 - Backend, transmissão e exclusão de dados ainda dependem de decisões futuras.
+
+## Administração
+
+- Contas possuem um tipo: `standard` ou `administrator`.
+- Apenas administradores autenticados podem administrar exercícios, eventos e contas. A verificação é obrigatória na API, não apenas na interface.
+- Um administrador pode ativar/desativar contas, alterar o tipo de conta e redefinir senhas. Uma conta não pode desativar a si mesma.

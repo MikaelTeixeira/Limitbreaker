@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/access_screens.dart';
+import '../../features/admin/presentation/admin_screen.dart';
 import '../../features/activities/presentation/activities_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/exercises/presentation/exercises_screen.dart';
@@ -23,7 +24,8 @@ final appRouterProvider = Provider<GoRouter>(
       GoRoute(path: '/', builder: (_, _) => const SplashScreen()),
       GoRoute(path: '/welcome', builder: (_, _) => const WelcomeScreen()),
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
-      GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
+      GoRoute(path: '/admin', builder: (_, _) => const AdminScreen()),
+      GoRoute(path: '/register', builder: (_, _) => const OnboardingScreen()),
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
       GoRoute(
         path: '/workouts',

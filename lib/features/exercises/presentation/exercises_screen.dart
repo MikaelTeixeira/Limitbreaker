@@ -130,7 +130,7 @@ class _StrengthExercises extends StatelessWidget {
       ...ExerciseCatalog.strengthExercises[group]!.map(
         (exercise) => Card(
           child: ListTile(
-            leading: const Icon(Icons.image_outlined),
+            leading: const _PendingExerciseImage(),
             title: Text(exercise.name),
             subtitle: const Text('Carga e repetições: próxima fatia'),
             trailing: const Icon(Icons.arrow_forward),
@@ -138,6 +138,27 @@ class _StrengthExercises extends StatelessWidget {
         ),
       ),
     ],
+  );
+}
+
+class _PendingExerciseImage extends StatelessWidget {
+  const _PendingExerciseImage();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 56,
+    height: 56,
+    color: AppColors.bone,
+    alignment: Alignment.center,
+    child: const Text(
+      'IMAGEM\nPENDENTE',
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: 7,
+        fontWeight: FontWeight.w800,
+        color: AppColors.steel,
+      ),
+    ),
   );
 }
 

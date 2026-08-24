@@ -12,7 +12,9 @@ import 'package:shelf_router/shelf_router.dart';
 Future<void> main() async {
   final url = Platform.environment['DATABASE_URL'];
   if (url == null || url.isEmpty) throw StateError('Defina DATABASE_URL.');
-  final db = await Connection.openFromUrl(url);
+  final db = await Connection.openFromUrl(
+    url.contains('?') ? '$url&sslmode=disable' : '$url?sslmode=disable',
+  );
   final api = _Api(db);
   final router = Router()
     ..get('/health', api.health)
@@ -20,7 +22,17 @@ Future<void> main() async {
     ..post('/auth/login', api.login)
     ..get('/me', api.me)
     ..get('/workouts', api.listWorkouts)
-    ..post('/workouts', api.createWorkout);
+    ..post('/workouts', api.createWorkout)
+    ..get('/admin/exercises', api.adminExercises)
+    ..get('/admin/categories', api.adminCategories)
+    ..post('/admin/exercises', api.createExercise)
+    ..patch('/admin/exercises/<id>', api.renameExercise)
+    ..delete('/admin/exercises/<id>', api.deleteExercise)
+    ..get('/admin/users', api.adminUsers)
+    ..patch('/admin/users/<id>', api.updateUser)
+    ..post('/admin/events', api.createEvent)
+    ..patch('/admin/events/<id>/start', api.startEvent)
+    ..patch('/admin/events/<id>/finish', api.finishEvent);
   final handler = const Pipeline()
       .addMiddleware(_cors)
       .addMiddleware(logRequests())
@@ -87,21 +99,29 @@ class _Api {
             'weight': weight,
           },
         );
-        await tx.execute(
+        final account = await tx.execute(
           Sql.named(
-            'insert into local_credentials (profile_id, username, password_hash) values (@id, @username, @hash)',
+            'insert into users (profile_id, username, display_name, password_hash) values (@id, @username, @name, @hash) returning id as user_id, user_type',
           ),
           parameters: {
             'id': inserted.first[0],
             'username': username.toLowerCase(),
+            'name': displayName,
             'hash': BCrypt.hashpw(password, BCrypt.gensalt()),
           },
         );
-        return inserted.first.toColumnMap();
+        return {
+          ...inserted.first.toColumnMap(),
+          ...account.first.toColumnMap(),
+        };
       });
       return _ok({
         ...profile,
-        'token': await _session(profile['id'].toString()),
+        'user_type': profile['user_type'],
+        'token': await _session(
+          userId: profile['user_id'].toString(),
+          profileId: profile['id'].toString(),
+        ),
       }, status: 201);
     } on ServerException catch (_) {
       return _conflict('E-mail ou nome de usuário já cadastrado.');
@@ -116,7 +136,7 @@ class _Api {
       return _bad('Informe acesso e senha.');
     final result = await db.execute(
       Sql.named(
-        'select p.id, p.email, p.display_name, c.password_hash from local_credentials c join app_profiles p on p.id = c.profile_id where c.username = @value or p.email = @value limit 1',
+        'select u.id as user_id, u.user_type::text as user_type, u.is_active, u.profile_id, u.password_hash, p.id as profile_id_result, p.email, p.display_name from users u left join app_profiles p on p.id = u.profile_id where u.username = @value or p.email = @value limit 1',
       ),
       parameters: {'value': identifier},
     );
@@ -127,11 +147,16 @@ class _Api {
         ))
       return _unauthorized();
     final profile = result.first.toColumnMap();
+    if (profile['is_active'] != true) return _unauthorized();
     return _ok({
-      'id': profile['id'],
-      'email': profile['email'],
-      'display_name': profile['display_name'],
-      'token': await _session(profile['id'].toString()),
+      'id': profile['user_id'].toString(),
+      'email': profile['email']?.toString(),
+      'display_name': profile['display_name']?.toString(),
+      'user_type': profile['user_type'].toString(),
+      'token': await _session(
+        userId: profile['user_id'].toString(),
+        profileId: profile['profile_id']?.toString(),
+      ),
     });
   }
 
@@ -229,15 +254,158 @@ class _Api {
     return _ok({'id': session}, status: 201);
   }
 
-  Future<String> _session(String profileId) async {
+  Future<Response> adminExercises(Request request) async {
+    if (await _adminContext(request) == null) return _unauthorized();
+    final rows = await db.execute(
+      'select e.id::text as id, e.name, c.id::text as category_id, c.name as category_name from exercises e join exercise_categories c on c.id = e.exercise_category_id order by c.name, e.name',
+    );
+    return _ok({'items': rows.map((row) => row.toColumnMap()).toList()});
+  }
+
+  Future<Response> adminCategories(Request request) async {
+    if (await _adminContext(request) == null) return _unauthorized();
+    final rows = await db.execute(
+      'select id::text as id, name from exercise_categories order by name',
+    );
+    return _ok({'items': rows.map((row) => row.toColumnMap()).toList()});
+  }
+
+  Future<Response> createExercise(Request request) async {
+    if (await _adminContext(request) == null) return _unauthorized();
+    final body = await _body(request);
+    final name = _text(body?['name'], 2, 100);
+    final categoryId = _text(body?['categoryId'], 36, 36);
+    if (name == null || categoryId == null)
+      return _bad('Informe nome e categoria.');
+    try {
+      final row = await db.execute(
+        Sql.named(
+          'insert into exercises (name, exercise_category_id) values (@name, @category) returning id::text as id, name, exercise_category_id::text as exercise_category_id',
+        ),
+        parameters: {'name': name, 'category': categoryId},
+      );
+      return _ok(row.first.toColumnMap(), status: 201);
+    } on ServerException catch (_) {
+      return _conflict('Exercício duplicado ou categoria inválida.');
+    }
+  }
+
+  Future<Response> renameExercise(Request request, String id) async {
+    if (await _adminContext(request) == null) return _unauthorized();
+    final name = _text((await _body(request))?['name'], 2, 100);
+    if (name == null) return _bad('Informe um nome válido.');
+    final result = await db.execute(
+      Sql.named(
+        'update exercises set name = @name where id = @id returning id::text as id, name',
+      ),
+      parameters: {'id': id, 'name': name},
+    );
+    return result.isEmpty
+        ? Response.notFound('Não encontrado.')
+        : _ok(result.first.toColumnMap());
+  }
+
+  Future<Response> deleteExercise(Request request, String id) async {
+    if (await _adminContext(request) == null) return _unauthorized();
+    final result = await db.execute(
+      Sql.named('delete from exercises where id = @id returning id'),
+      parameters: {'id': id},
+    );
+    return result.isEmpty
+        ? Response.notFound('Não encontrado.')
+        : Response(204, headers: _headers);
+  }
+
+  Future<Response> adminUsers(Request request) async {
+    if (await _adminContext(request) == null) return _unauthorized();
+    final rows = await db.execute(
+      'select id::text as id, username, display_name, user_type::text as user_type, is_active, created_at::text as created_at from users order by created_at desc',
+    );
+    return _ok({'items': rows.map((row) => row.toColumnMap()).toList()});
+  }
+
+  Future<Response> updateUser(Request request, String id) async {
+    final admin = await _adminContext(request);
+    if (admin == null) return _unauthorized();
+    final body = await _body(request);
+    final active = body?['isActive'];
+    final type = body?['userType'];
+    final password = body?['password'];
+    if (active is! bool && type is! String && password is! String)
+      return _bad('Nenhuma alteração válida foi informada.');
+    if (id == admin.userId && active == false)
+      return _bad('Uma conta não pode desativar a si mesma.');
+    if (type is String && !const {'standard', 'administrator'}.contains(type))
+      return _bad('Tipo de conta inválido.');
+    if (password is String && _text(password, 8, 128) == null)
+      return _bad('A nova senha deve ter ao menos 8 caracteres.');
+    final result = await db.execute(
+      Sql.named(
+        'update users set is_active = coalesce(@active, is_active), user_type = coalesce(cast(@type as user_type), user_type), password_hash = coalesce(@hash, password_hash) where id = @id returning id::text as id, username, display_name, user_type::text as user_type, is_active',
+      ),
+      parameters: {
+        'id': id,
+        'active': active,
+        'type': type,
+        'hash': password is String
+            ? BCrypt.hashpw(password, BCrypt.gensalt())
+            : null,
+      },
+    );
+    return result.isEmpty
+        ? Response.notFound('Não encontrado.')
+        : _ok(result.first.toColumnMap());
+  }
+
+  Future<Response> createEvent(Request request) async {
+    final admin = await _adminContext(request);
+    if (admin == null) return _unauthorized();
+    final title = _text((await _body(request))?['title'], 3, 100);
+    if (title == null) return _bad('Informe o título do evento.');
+    final result = await db.execute(
+      Sql.named(
+        "insert into app_events (title, status, created_by) values (@title, 'scheduled', @admin) returning id::text as id, title, status",
+      ),
+      parameters: {'title': title, 'admin': admin.userId},
+    );
+    return _ok(result.first.toColumnMap(), status: 201);
+  }
+
+  Future<Response> startEvent(Request request, String id) async =>
+      _changeEventStatus(request, id, 'active');
+  Future<Response> finishEvent(Request request, String id) async =>
+      _changeEventStatus(request, id, 'finished');
+
+  Future<Response> _changeEventStatus(
+    Request request,
+    String id,
+    String status,
+  ) async {
+    if (await _adminContext(request) == null) return _unauthorized();
+    final timestamp = status == 'active'
+        ? 'started_at = now()'
+        : 'finished_at = now()';
+    final result = await db.execute(
+      Sql.named(
+      'update app_events set status = @status, $timestamp where id = @id and status <> \'finished\' returning id::text as id, title, status',
+      ),
+      parameters: {'id': id, 'status': status},
+    );
+    return result.isEmpty
+        ? Response.notFound('Não encontrado.')
+        : _ok(result.first.toColumnMap());
+  }
+
+  Future<String> _session({required String userId, String? profileId}) async {
     final bytes = List<int>.generate(32, (_) => Random.secure().nextInt(256));
     final token = base64UrlEncode(bytes).replaceAll('=', '');
     await db.execute(
       Sql.named(
-        'insert into local_sessions (token_hash, profile_id, expires_at) values (@hash, @profile, now() + interval \'30 days\')',
+        'insert into local_sessions (token_hash, user_id, profile_id, expires_at) values (@hash, @user, @profile, now() + interval \'30 days\')',
       ),
       parameters: {
         'hash': sha256.convert(utf8.encode(token)).toString(),
+        'user': userId,
         'profile': profileId,
       },
     );
@@ -256,6 +424,29 @@ class _Api {
     );
     return row.isEmpty ? null : row.first[0].toString();
   }
+
+  Future<_AuthContext?> _adminContext(Request request) async {
+    final header = request.headers['authorization'];
+    if (header == null || !header.startsWith('Bearer ')) return null;
+    final hash = sha256.convert(utf8.encode(header.substring(7))).toString();
+    final row = await db.execute(
+      Sql.named(
+        'select s.user_id, u.user_type::text as user_type, u.is_active from local_sessions s join users u on u.id = s.user_id where s.token_hash = @hash and s.expires_at > now()',
+      ),
+      parameters: {'hash': hash},
+    );
+    if (row.isEmpty) return null;
+    final values = row.first.toColumnMap();
+    if (values['user_type'].toString() != 'administrator' ||
+        values['is_active'] != true)
+      return null;
+    return _AuthContext(values['user_id'].toString());
+  }
+}
+
+class _AuthContext {
+  const _AuthContext(this.userId);
+  final String userId;
 }
 
 Future<Map<String, dynamic>?> _body(Request request) async {

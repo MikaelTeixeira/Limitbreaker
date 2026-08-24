@@ -52,6 +52,10 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
             ),
             const SizedBox(height: 20),
             _RankingSummary(result: result, friends: friends),
+            if (!friends) ...[
+              const SizedBox(height: 20),
+              _CurrentStage(result: result),
+            ],
             if (!friends && result.rankedCategories.isNotEmpty) ...[
               const SizedBox(height: 28),
               const SectionHeading(
@@ -140,4 +144,30 @@ class _RankingSummary extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _CurrentStage extends StatelessWidget {
+  const _CurrentStage({required this.result});
+  final RankingCalculationResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final stage = RankingStageCatalog.forScore(result.totalScore ?? 0);
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.workspace_premium_outlined),
+        title: Text(
+          result.totalScore == null
+              ? 'PRÓXIMO ESTÁGIO: BRONZE I'
+              : stage.label.toUpperCase(),
+          style: const TextStyle(fontWeight: FontWeight.w900),
+        ),
+        subtitle: Text(
+          result.totalScore == null
+              ? 'O estágio será definido após a primeira pontuação válida.'
+              : 'Faixa iniciada em ${stage.minimumScore.toStringAsFixed(2)} pontos normalizados.',
+        ),
+      ),
+    );
+  }
 }

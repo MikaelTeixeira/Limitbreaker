@@ -12,6 +12,13 @@ void main() {
       CategoryScore(category: category, normalizedScore: value);
 
   group('RankingCalculator', () {
+    test('divide a escala normalizada em quinze estágios', () {
+      expect(RankingStageCatalog.all, hasLength(15));
+      expect(RankingStageCatalog.forScore(0).label, 'Bronze 1');
+      expect(RankingStageCatalog.forScore(20).label, 'Prata 1');
+      expect(RankingStageCatalog.forScore(100).label, 'Platina 3');
+    });
+
     test('seleciona as três maiores, ordena e aplica 75/15/10', () {
       final result = calculator.calculate([
         score(run, 70),

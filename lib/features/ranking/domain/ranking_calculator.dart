@@ -17,6 +17,52 @@ enum RankingCalculationStatus {
   unavailable,
 }
 
+enum RankingMetal { bronze, silver, gold, diamond, platinum }
+
+class RankingStage {
+  const RankingStage({
+    required this.metal,
+    required this.stage,
+    required this.minimumScore,
+  });
+
+  final RankingMetal metal;
+  final int stage;
+  final double minimumScore;
+
+  String get metalLabel => switch (metal) {
+    RankingMetal.bronze => 'Bronze',
+    RankingMetal.silver => 'Prata',
+    RankingMetal.gold => 'Ouro',
+    RankingMetal.diamond => 'Diamante',
+    RankingMetal.platinum => 'Platina',
+  };
+
+  String get label => '$metalLabel $stage';
+}
+
+abstract final class RankingStageCatalog {
+  static const _bandSize = 100 / 15;
+
+  static RankingStage forScore(double score) {
+    final index = (score.clamp(0, 100) / _bandSize).floor().clamp(0, 14);
+    return RankingStage(
+      metal: RankingMetal.values[index ~/ 3],
+      stage: (index % 3) + 1,
+      minimumScore: index * _bandSize,
+    );
+  }
+
+  static List<RankingStage> get all => List.generate(
+    15,
+    (index) => RankingStage(
+      metal: RankingMetal.values[index ~/ 3],
+      stage: (index % 3) + 1,
+      minimumScore: index * _bandSize,
+    ),
+  );
+}
+
 class RankingCalculationResult {
   const RankingCalculationResult({
     required this.totalScore,

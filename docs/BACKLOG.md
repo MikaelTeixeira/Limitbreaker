@@ -5,7 +5,7 @@
 - Fase 1 — Fundação e vertical slice: concluída.
 - Fase 2 — Treinos e atividades: concluída (dados locais em memória).
 - Fase 3 — Social e conquistas: em desenvolvimento.
-- Fase 4 — Backend: em desenvolvimento (PostgreSQL local inicializado; Supabase planejado).
+- Fase 4 — Backend local: concluída (PostgreSQL local, API autenticada e persistência de cadastro/treinos).
 - Fase 5 — Inteligência e personalização: fora do escopo imediato.
 
 ## Implementado — Fase 1
@@ -23,16 +23,13 @@
 - Revalidação do build APK no toolchain Android local.
 - Refinamento de acessibilidade com leitores de tela reais.
 - Fase 3: convites locais, amizades, chat demonstrativo e conquistas completas.
-- Fase 4: implementar login e cadastro por e-mail, seguido de Google Auth assim que o projeto Supabase e as credenciais OAuth estiverem disponíveis.
-- Fase 4: conectar o Flutter a uma API local autenticada para persistir o onboarding e as sugestões no PostgreSQL.
-- Fase 4: persistir registros manuais de treinos, cargas e atividades por meio da API local PostgreSQL; substituir o repositório em memória sem criar dados de demonstração.
+- Persistir onboarding e sugestões de treino na API local PostgreSQL.
 - Sugestão de treino: usar rotinas pré-definidas conforme as preferências até a contratação de uma chave de API; depois substituir por IA via backend, sem chave no Flutter.
 
 ## Planejado — Próximas fases
 
-- Persistência durável de treinos e atividades após definição de armazenamento.
 - Fase 3: convites, QR real, chat, grupos, conquistas completas e notificações.
-- Fase 4: autenticação, banco, sincronização, fotos e tempo real.
+- Fase 4: sincronização ampliada, fotos e tempo real.
 
 ## Pendente de decisão
 

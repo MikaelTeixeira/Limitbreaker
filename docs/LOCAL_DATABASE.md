@@ -8,6 +8,9 @@ O banco local `limitbreaker` usa o PostgreSQL instalado na máquina para desenvo
 - `health_assessments`: perfil de treino, nível de atividade, consentimento e indicação de treino adaptado.
 - `health_disclosures`: respostas pessoais e histórico familiar, incluindo a descrição fornecida pela pessoa.
 - `workout_suggestions`: sugestão gerada para o perfil, modalidade e grupo muscular escolhidos.
+- `users` e `local_sessions`: contas com nome de usuário, hash bcrypt e vínculo opcional ao perfil físico; sessões locais mantêm apenas o hash do token.
+- `workout_sessions`, `workout_exercises` e `workout_sets`: lançamentos de treino, exercícios, séries, repetições e cargas.
+- `exercise_categories` e `exercises`: catálogo de categorias musculares e exercícios de academia. `exercises.exercise_category_id` referencia `exercise_categories.id`.
 
 ## Segurança
 
@@ -37,4 +40,10 @@ $env:DATABASE_URL='postgresql://USUARIO:SENHA@127.0.0.1:5432/limitbreaker'
 dart run bin/server.dart
 ```
 
-Use `http://127.0.0.1:8080/health` para verificar a integração PostgreSQL. A API inicial expõe somente verificação e leitura de perfil; gravação e vínculo por usuário dependem da autenticação real.
+Use `http://127.0.0.1:8080/health` para verificar a integração PostgreSQL. A API local expõe cadastro, login, perfil autenticado e criação/listagem de treinos. Os endpoints de treino exigem `Authorization: Bearer <token>` e gravam somente no perfil da sessão autenticada.
+
+Para rodar no Windows ou navegador, o Flutter usa `http://127.0.0.1:8080` por padrão. Em emulador Android, use:
+
+```powershell
+flutter run --dart-define=LOCAL_API_BASE_URL=http://10.0.2.2:8080
+```

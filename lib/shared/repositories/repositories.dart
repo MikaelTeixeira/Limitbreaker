@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/ranking/domain/ranking_calculator.dart';
+import '../data/local_api.dart';
 import '../models/models.dart';
 
 abstract interface class AuthenticationRepository {
@@ -291,9 +292,24 @@ final todayWorkoutProvider = FutureProvider<WorkoutPlan?>(
 final workoutPlansProvider = FutureProvider<List<WorkoutPlan>>(
   (ref) => ref.watch(workoutRepositoryProvider).getPlans(),
 );
-final workoutSessionsProvider = FutureProvider<List<WorkoutSession>>(
-  (ref) => ref.watch(workoutRepositoryProvider).getSessions(),
-);
+final workoutSessionsProvider = FutureProvider<List<WorkoutSession>>((
+  ref,
+) async {
+  final items = await LocalApi.instance.listWorkouts();
+  return items
+      .map(
+        (item) => WorkoutSession(
+          id: item['id'].toString(),
+          planId: item['category'].toString(),
+          performedAt: DateTime.parse(item['performed_at'].toString()),
+          completedAt: DateTime.parse(item['performed_at'].toString()),
+          duration: Duration(
+            seconds: (item['duration_seconds'] as num?)?.toInt() ?? 0,
+          ),
+        ),
+      )
+      .toList();
+});
 final activitiesProvider = FutureProvider<List<ActivitySession>>(
   (ref) => ref.watch(appRepositoryProvider).getActivities(),
 );

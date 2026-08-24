@@ -80,11 +80,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       }
                       setState(() => _saving = true);
                       try {
-                        await LocalApi.instance.login(
+                        final isAdministrator = await LocalApi.instance.login(
                           _identifier.text.trim(),
                           _password.text,
                         );
-                        if (mounted) context.go('/home');
+                        if (mounted)
+                          context.go(isAdministrator ? '/admin' : '/home');
                       } on LocalApiException catch (error) {
                         if (mounted)
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -203,11 +204,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _MeasureField(controller: _height, label: 'Altura'),
+                child: _MeasureField(controller: _height, label: 'Altura (cm)'),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _MeasureField(controller: _weight, label: 'Peso'),
+                child: _MeasureField(controller: _weight, label: 'Peso (kg)'),
               ),
             ],
           ),
