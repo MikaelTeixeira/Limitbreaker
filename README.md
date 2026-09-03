@@ -6,7 +6,7 @@ Aplicativo mobile Flutter para acompanhar evolução física e esportiva com dis
 
 ## Estado atual
 
-A aplicação inicia sem registros fictícios: zero treinos, atividades, amigos, conquistas e pontuação. O onboarding inclui a escolha de modalidades primária, secundária e terciária para o Ranking. O PostgreSQL local já possui o esquema inicial, mas a API autenticada que conectará o Flutter a ele ainda está em desenvolvimento.
+A aplicação inicia sem registros fictícios: zero treinos, atividades, amigos, conquistas e pontuação. O onboarding inclui a escolha de modalidades primária, secundária e terciária para o Ranking. O ambiente de desenvolvimento já possui PostgreSQL local, API autenticada e persistência de contas e treinos. A persistência do onboarding e das sugestões de treino, a integração remota com Supabase e o Google OAuth permanecem pendentes.
 
 ## Requisitos
 
@@ -59,7 +59,7 @@ Detalhes: [arquitetura](docs/architecture.md), [regras de domínio](docs/domain-
 
 ## Limitações atuais
 
-- Dados, ranking global, amigos, conquistas e histórico são demonstrativos.
+- Ranking global, amigos e conquistas ainda são locais ou demonstrativos; contas, perfil autenticado e treinos já possuem integração com a API local.
 - Perguntas de saúde, histórico familiar, termos e níveis são provisórios.
 - Com menos de três categorias, o ranking retorna resultado provisório sem pontuação oficial.
 - Edição de treinos, atividades, chat, scanner QR e notificações reais estão planejados.

@@ -1,5 +1,7 @@
 # Log de desenvolvimento
 
+> Este arquivo é histórico: afirmações sobre trabalho "pendente" registram o estado na data de cada entrada. O estado corrente e a ordem de execução ficam em `BACKLOG.md`.
+
 ## 2026-08-06 — Fase 1
 
 - Inicializado projeto Flutter 3.44.4 / Dart 3.12.2 para Android e iOS.

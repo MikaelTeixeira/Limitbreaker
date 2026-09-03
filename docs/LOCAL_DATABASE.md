@@ -15,7 +15,7 @@ O banco local `limitbreaker` usa o PostgreSQL instalado na máquina para desenvo
 ## Segurança
 
 - O APK Flutter não recebe senha, string de conexão PostgreSQL, nem credenciais administrativas.
-- A próxima etapa é uma API local autenticada, responsável por validar identidade e gravar apenas os dados do perfil autenticado.
+- A API local autenticada em `server/` valida a identidade e grava apenas os dados do perfil autenticado. A próxima ampliação é persistir onboarding e sugestões de treino pela mesma fronteira.
 - A migração local é separada da migração Supabase em `supabase/migrations/`, pois a segunda depende de `auth.users` e RLS do Supabase.
 - Não registre respostas de saúde em logs, analytics ou mensagens de erro.
 

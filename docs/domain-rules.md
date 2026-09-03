@@ -38,7 +38,7 @@
 - Encerrar uma sessão inexistente é um erro explícito, nunca um registro silencioso.
 - O lançamento manual de musculação exige grupo muscular, ao menos um exercício, séries, repetições e carga. A lista de exercícios é apenas um catálogo de referência; um exercício não entra no histórico até a confirmação de “Finalizar treino”.
 - Corrida e ciclismo exigem duração e pace no formato min:seg/km. Natação exige duração e distância em metros.
-- Histórico, recordes e atividades esportivas ainda estão em desenvolvimento nesta Fase 2.
+- Registro e histórico de treinos já são persistidos pela API local. Edição completa, imagens de execução e consolidação de recordes para todas as modalidades permanecem em desenvolvimento.
 
 ## Privacidade
 
