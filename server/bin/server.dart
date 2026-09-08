@@ -4,14 +4,17 @@ import 'dart:math';
 
 import 'package:bcrypt/bcrypt.dart';
 import 'package:crypto/crypto.dart';
+import 'package:limit_breaker_local_api/database/local_database_initializer.dart';
 import 'package:postgres/postgres.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_router/shelf_router.dart';
 
+/// Inicializa o banco, registra as rotas e inicia a API local na porta 8080.
 Future<void> main() async {
   final url = Platform.environment['DATABASE_URL'];
   if (url == null || url.isEmpty) throw StateError('Defina DATABASE_URL.');
+  await LocalDatabaseInitializer.ensureCreated(url);
   final db = await Connection.openFromUrl(
     url.contains('?') ? '$url&sslmode=disable' : '$url?sslmode=disable',
   );
@@ -45,6 +48,7 @@ Future<void> main() async {
   stdout.writeln('API local em http://${server.address.host}:${server.port}');
 }
 
+/// Permite chamadas do aplicativo web para a API local durante o desenvolvimento.
 final _cors = createMiddleware(
   requestHandler: (request) =>
       request.method == 'OPTIONS' ? Response.ok('', headers: _headers) : null,
@@ -57,15 +61,19 @@ const _headers = {
   'access-control-allow-methods': 'GET, POST, OPTIONS',
 };
 
+/// Implementa os endpoints da API e concentra o acesso autenticado ao banco.
 class _Api {
+  /// Recebe a conexão PostgreSQL usada por todos os endpoints da API.
   _Api(this.db);
   final Connection db;
 
+  /// Confirma que a API consegue consultar o banco de dados.
   Future<Response> health(Request _) async {
     await db.execute('select 1');
     return _ok({'database': 'connected'});
   }
 
+  /// Valida o cadastro, cria o perfil e armazena a senha com hash BCrypt.
   Future<Response> register(Request request) async {
     final body = await _body(request);
     if (body == null) return _bad('Dados inválidos.');
@@ -89,7 +97,7 @@ class _Api {
       final profile = await db.runTx((tx) async {
         final inserted = await tx.execute(
           Sql.named(
-            'insert into app_profiles (email, display_name, age, height_cm, weight_kg) values (@email, @name, @age, @height, @weight) returning id, email, display_name',
+            'insert into app_profiles (email, display_name, age, height_cm, weight_kg) values (@email, @name, @age, @height, @weight) returning id::text as id, email, display_name',
           ),
           parameters: {
             'email': email,
@@ -101,7 +109,7 @@ class _Api {
         );
         final account = await tx.execute(
           Sql.named(
-            'insert into users (profile_id, username, display_name, password_hash) values (@id, @username, @name, @hash) returning id as user_id, user_type',
+            'insert into users (profile_id, username, display_name, password_hash) values (@id, @username, @name, @hash) returning id::text as user_id, user_type::text as user_type',
           ),
           parameters: {
             'id': inserted.first[0],
@@ -128,6 +136,7 @@ class _Api {
     }
   }
 
+  /// Valida as credenciais e cria uma sessão para a conta autenticada.
   Future<Response> login(Request request) async {
     final body = await _body(request);
     final identifier = _text(body?['identifier'], 3, 320)?.toLowerCase();
@@ -160,6 +169,7 @@ class _Api {
     });
   }
 
+  /// Retorna os dados básicos do perfil vinculado à sessão atual.
   Future<Response> me(Request request) async {
     final id = await _profileId(request);
     if (id == null) return _unauthorized();
@@ -172,6 +182,7 @@ class _Api {
     return result.isEmpty ? _unauthorized() : _ok(result.first.toColumnMap());
   }
 
+  /// Lista os treinos registrados pelo perfil autenticado.
   Future<Response> listWorkouts(Request request) async {
     final id = await _profileId(request);
     if (id == null) return _unauthorized();
@@ -184,6 +195,7 @@ class _Api {
     return _ok({'items': rows.map((row) => row.toColumnMap()).toList()});
   }
 
+  /// Valida e grava uma sessão de treino, incluindo exercícios e séries.
   Future<Response> createWorkout(Request request) async {
     final profileId = await _profileId(request);
     final body = await _body(request);
@@ -254,6 +266,7 @@ class _Api {
     return _ok({'id': session}, status: 201);
   }
 
+  /// Lista exercícios e suas categorias para usuários administradores.
   Future<Response> adminExercises(Request request) async {
     if (await _adminContext(request) == null) return _unauthorized();
     final rows = await db.execute(
@@ -262,6 +275,7 @@ class _Api {
     return _ok({'items': rows.map((row) => row.toColumnMap()).toList()});
   }
 
+  /// Lista as categorias de exercícios disponíveis para administração.
   Future<Response> adminCategories(Request request) async {
     if (await _adminContext(request) == null) return _unauthorized();
     final rows = await db.execute(
@@ -270,6 +284,7 @@ class _Api {
     return _ok({'items': rows.map((row) => row.toColumnMap()).toList()});
   }
 
+  /// Cria um exercício na categoria escolhida por um administrador.
   Future<Response> createExercise(Request request) async {
     if (await _adminContext(request) == null) return _unauthorized();
     final body = await _body(request);
@@ -290,6 +305,7 @@ class _Api {
     }
   }
 
+  /// Atualiza o nome de um exercício existente.
   Future<Response> renameExercise(Request request, String id) async {
     if (await _adminContext(request) == null) return _unauthorized();
     final name = _text((await _body(request))?['name'], 2, 100);
@@ -305,6 +321,7 @@ class _Api {
         : _ok(result.first.toColumnMap());
   }
 
+  /// Remove um exercício quando solicitado por um administrador.
   Future<Response> deleteExercise(Request request, String id) async {
     if (await _adminContext(request) == null) return _unauthorized();
     final result = await db.execute(
@@ -316,6 +333,7 @@ class _Api {
         : Response(204, headers: _headers);
   }
 
+  /// Lista contas e permissões visíveis para a área administrativa.
   Future<Response> adminUsers(Request request) async {
     if (await _adminContext(request) == null) return _unauthorized();
     final rows = await db.execute(
@@ -324,6 +342,7 @@ class _Api {
     return _ok({'items': rows.map((row) => row.toColumnMap()).toList()});
   }
 
+  /// Atualiza situação, permissão ou senha de uma conta administrativa.
   Future<Response> updateUser(Request request, String id) async {
     final admin = await _adminContext(request);
     if (admin == null) return _unauthorized();
@@ -357,6 +376,7 @@ class _Api {
         : _ok(result.first.toColumnMap());
   }
 
+  /// Cria um evento com status inicial de agendado.
   Future<Response> createEvent(Request request) async {
     final admin = await _adminContext(request);
     if (admin == null) return _unauthorized();
@@ -371,11 +391,15 @@ class _Api {
     return _ok(result.first.toColumnMap(), status: 201);
   }
 
+  /// Marca um evento agendado como ativo.
   Future<Response> startEvent(Request request, String id) async =>
       _changeEventStatus(request, id, 'active');
+
+  /// Marca um evento ativo como finalizado.
   Future<Response> finishEvent(Request request, String id) async =>
       _changeEventStatus(request, id, 'finished');
 
+  /// Altera o status e registra o horário de início ou encerramento do evento.
   Future<Response> _changeEventStatus(
     Request request,
     String id,
@@ -387,7 +411,7 @@ class _Api {
         : 'finished_at = now()';
     final result = await db.execute(
       Sql.named(
-      'update app_events set status = @status, $timestamp where id = @id and status <> \'finished\' returning id::text as id, title, status',
+        'update app_events set status = @status, $timestamp where id = @id and status <> \'finished\' returning id::text as id, title, status',
       ),
       parameters: {'id': id, 'status': status},
     );
@@ -396,6 +420,7 @@ class _Api {
         : _ok(result.first.toColumnMap());
   }
 
+  /// Gera, armazena apenas o hash e devolve um token de sessão temporário.
   Future<String> _session({required String userId, String? profileId}) async {
     final bytes = List<int>.generate(32, (_) => Random.secure().nextInt(256));
     final token = base64UrlEncode(bytes).replaceAll('=', '');
@@ -412,6 +437,7 @@ class _Api {
     return token;
   }
 
+  /// Obtém o identificador do perfil associado ao token enviado na requisição.
   Future<String?> _profileId(Request request) async {
     final header = request.headers['authorization'];
     if (header == null || !header.startsWith('Bearer ')) return null;
@@ -425,6 +451,7 @@ class _Api {
     return row.isEmpty ? null : row.first[0].toString();
   }
 
+  /// Confirma que a sessão pertence a uma conta administradora ativa.
   Future<_AuthContext?> _adminContext(Request request) async {
     final header = request.headers['authorization'];
     if (header == null || !header.startsWith('Bearer ')) return null;
@@ -444,11 +471,14 @@ class _Api {
   }
 }
 
+/// Guarda o identificador da conta autorizada para operações administrativas.
 class _AuthContext {
+  /// Cria o contexto com a conta já autorizada para administrar o sistema.
   const _AuthContext(this.userId);
   final String userId;
 }
 
+/// Lê o corpo JSON da requisição ou retorna nulo quando ele for inválido.
 Future<Map<String, dynamic>?> _body(Request request) async {
   try {
     final value = jsonDecode(await request.readAsString());
@@ -458,24 +488,34 @@ Future<Map<String, dynamic>?> _body(Request request) async {
   }
 }
 
+/// Valida e limpa um texto dentro do tamanho permitido.
 String? _text(Object? value, int min, int max) {
   final text = value is String ? value.trim() : '';
   return text.length >= min && text.length <= max ? text : null;
 }
 
+/// Converte e valida um número inteiro dentro dos limites informados.
 int? _int(Object? value, int min, int max) {
   final number = value is num ? value.toInt() : int.tryParse('$value');
   return number != null && number >= min && number <= max ? number : null;
 }
 
+/// Converte e valida um número decimal dentro dos limites informados.
 double? _number(Object? value, double min, double max) {
   final number = value is num ? value.toDouble() : double.tryParse('$value');
   return number != null && number >= min && number <= max ? number : null;
 }
 
+/// Cria uma resposta JSON de sucesso com o código HTTP informado.
 Response _ok(Object body, {int status = 200}) =>
     Response(status, body: jsonEncode(body), headers: _headers);
+
+/// Cria uma resposta JSON para dados inválidos.
 Response _bad(String text) => _ok({'error': text}, status: 400);
+
+/// Cria uma resposta JSON para conflito de dados existentes.
 Response _conflict(String text) => _ok({'error': text}, status: 409);
+
+/// Cria uma resposta JSON quando a sessão não é autorizada.
 Response _unauthorized() =>
     _ok({'error': 'Acesso não autorizado.'}, status: 401);

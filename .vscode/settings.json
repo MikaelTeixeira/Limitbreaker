@@ -1,0 +1,7 @@
+{
+  "dart.flutterSdkPath": "C:\\tools\\flutter",
+  "terminal.integrated.env.windows": {
+    "PATH": "${workspaceFolder};C:\\tools\\flutter\\bin;${env:PATH}",
+    "PUB_CACHE": "${workspaceFolder}\\.pub-cache"
+  }
+}

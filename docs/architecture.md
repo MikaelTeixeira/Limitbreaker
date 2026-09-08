@@ -8,8 +8,17 @@ O aplicativo é 100% Flutter/Dart, mobile-first e preparado para Android e iOS. 
 
 - `presentation`: telas, widgets, navegação e estados visuais.
 - `domain`: regras puras, como o cálculo de Ranking.
-- `data/application`: contratos, implementações locais/mock e providers Riverpod.
+- `data/application`: cliente de API, contratos, implementações locais/mock e providers Riverpod.
 - `core/shared`: design system, componentes reutilizáveis e modelos transversais.
+
+## Estrutura simplificada
+
+Os modelos e repositórios compartilhados ficam divididos por responsabilidade, mas mantêm arquivos índice para facilitar imports:
+
+- `shared/models/models.dart` exporta arquivos menores como `user_profile.dart`, `health_models.dart`, `workout_models.dart` e `social_models.dart`.
+- `shared/repositories/repositories.dart` exporta contratos, providers e implementações locais.
+
+Um guia arquivo por arquivo fica em [estrutura do código](code-structure.md).
 
 ## Dependências e fluxo
 
