@@ -1,9 +1,11 @@
 import '../../../shared/models/models.dart';
 
 abstract interface class CategoryScoreNormalizer {
+  /// Converte a pontuação recebida para a escala oficial de 0 a 100.
   double normalize(CategoryScore score);
 }
 
+/// Normalizador provisório que apenas limita valores à faixa permitida.
 class PassThroughScoreNormalizer implements CategoryScoreNormalizer {
   const PassThroughScoreNormalizer();
   @override
@@ -44,6 +46,7 @@ class RankingStage {
 abstract final class RankingStageCatalog {
   static const _bandSize = 100 / 15;
 
+  /// Encontra o estágio visual correspondente a uma pontuação.
   static RankingStage forScore(double score) {
     final index = (score.clamp(0, 100) / _bandSize).floor().clamp(0, 14);
     return RankingStage(
@@ -87,6 +90,7 @@ class RankingCalculator {
   static const weights = <double>[.75, .15, .10];
   final CategoryScoreNormalizer normalizer;
 
+  /// Calcula o ranking usando apenas as três maiores categorias normalizadas.
   RankingCalculationResult calculate(
     List<CategoryScore> scores, {
     DateTime? now,

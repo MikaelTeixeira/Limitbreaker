@@ -3,6 +3,7 @@ import '../../../shared/models/models.dart';
 class TrainingProfileCalculator {
   const TrainingProfileCalculator();
 
+  /// Define o perfil de treino a partir de saúde, histórico familiar e rotina.
   TrainingProfile calculate({
     required List<HealthDisclosure> personalDisclosures,
     required List<HealthDisclosure> familyHistory,

@@ -17,6 +17,7 @@ import '../../features/workouts/presentation/workout_registration_screen.dart';
 import '../../features/workouts/presentation/suggested_workout_screen.dart';
 import '../../shared/models/models.dart';
 
+/// Fornece o roteador central com todas as rotas navegáveis do aplicativo.
 final appRouterProvider = Provider<GoRouter>(
   (ref) => GoRouter(
     initialLocation: '/',

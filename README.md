@@ -47,7 +47,7 @@ lib/
 test/                  domínio, fluxo e regressão visual
 ```
 
-Detalhes: [arquitetura](docs/architecture.md), [regras de domínio](docs/domain-rules.md), [sistema de ranking](docs/ranking-system.md) e [backlog](docs/BACKLOG.md).
+Detalhes: [arquitetura](docs/architecture.md), [estrutura do código](docs/code-structure.md), [regras de domínio](docs/domain-rules.md), [sistema de ranking](docs/ranking-system.md) e [backlog](docs/BACKLOG.md).
 
 ## Dependências adicionadas
 
