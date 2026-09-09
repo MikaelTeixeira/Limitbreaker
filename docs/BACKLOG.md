@@ -21,7 +21,6 @@
 
 ## Próximo
 
-- Revalidação do build APK no toolchain Android local.
 - Refinamento de acessibilidade com leitores de tela reais.
 - Persistir onboarding e sugestões de treino na API local PostgreSQL.
 - Fase 3: convites locais, amizades, chat demonstrativo e conquistas completas.

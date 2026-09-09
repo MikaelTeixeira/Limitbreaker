@@ -40,11 +40,12 @@ Não inclua a senha no comando, em arquivos versionados ou no aplicativo.
 
 A ponte fica em `server/` e é o único componente que pode receber `DATABASE_URL`. O Flutter não recebe essa variável.
 
-No Windows, o comando `flutter run -d chrome` executado na raiz do projeto
+No Windows, o comando `.\flutter.bat run -d chrome` executado na raiz do projeto
 inicia essa API automaticamente quando ela ainda não estiver saudável. O
 arquivo `flutter.bat` chama `server/start_local_api.ps1`, que lê somente o
-arquivo local e ignorado `server/.env`. Assim, o navegador continua recebendo
-apenas a URL da API local, nunca a senha do PostgreSQL.
+arquivo local e ignorado `server/.env`, com fallback para a variável de usuário
+`DATABASE_URL`. Assim, o navegador continua recebendo apenas a URL da API local,
+nunca a senha do PostgreSQL.
 
 Antes do primeiro uso, crie `server/.env` a partir de `server/.env.example` e
 preencha `DATABASE_URL`. Depois disso, basta iniciar o Flutter pela raiz do

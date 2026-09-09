@@ -2,6 +2,15 @@
 
 > Este arquivo é histórico: afirmações sobre trabalho "pendente" registram o estado na data de cada entrada. O estado corrente e a ordem de execução ficam em `BACKLOG.md`.
 
+## 2026-09-09 — Ambiente local revalidado
+
+- Flutter, Dart, Java, Android SDK, Chrome e PostgreSQL foram validados no Windows.
+- A API local passou a localizar o Dart pelo `PATH`, aceitar a `DATABASE_URL` do ambiente como fallback e iniciar pelo wrapper versionado `flutter.bat`.
+- A conexão da API com o PostgreSQL respondeu normalmente pelo endpoint de saúde.
+- O projeto passou nos 23 testes e a referência visual foi atualizada para o Flutter 3.47.2.
+- O APK de depuração foi compilado com sucesso usando Android SDK 37; as dependências nativas e o CMake necessários ficaram instalados localmente.
+- A versão web foi carregada e navegou da abertura até a tela de login. A criação de um AVD Android permanece opcional enquanto os testes forem realizados no Chrome.
+
 ## 2026-08-06 — Fase 1
 
 - Inicializado projeto Flutter 3.44.4 / Dart 3.12.2 para Android e iOS.

@@ -10,7 +10,12 @@ $ErrorActionPreference = 'Stop'
 $serverDirectory = $PSScriptRoot
 $runtimeDirectory = Join-Path $serverDirectory '.runtime'
 $healthUrl = 'http://127.0.0.1:8080/health'
-$dartExecutable = 'C:\tools\flutter\bin\cache\dart-sdk\bin\dart.exe'
+$dartCommand = Get-Command dart.bat -ErrorAction SilentlyContinue
+$dartExecutable = if ($null -ne $dartCommand) {
+  Join-Path (Split-Path (Split-Path $dartCommand.Source)) 'bin\cache\dart-sdk\bin\dart.exe'
+} else {
+  (Get-Command dart.exe -ErrorAction SilentlyContinue).Source
+}
 
 function Test-LocalApiHealthy {
   <#
@@ -33,18 +38,20 @@ function Get-DatabaseUrl {
   #>
 
   $environmentFile = Join-Path $serverDirectory '.env'
-  if (-not (Test-Path -LiteralPath $environmentFile)) {
-    return $null
+  if (Test-Path -LiteralPath $environmentFile) {
+    $line = Get-Content -LiteralPath $environmentFile |
+      Where-Object { $_ -match '^\s*DATABASE_URL\s*=' } |
+      Select-Object -First 1
+    if ($null -ne $line) {
+      $fileValue = ($line -replace '^\s*DATABASE_URL\s*=', '').Trim()
+      $isPlaceholder = $fileValue -match 'SUA_SENHA|USUARIO|SENHA'
+      if (-not [string]::IsNullOrWhiteSpace($fileValue) -and -not $isPlaceholder) {
+        return $fileValue
+      }
+    }
   }
 
-  $line = Get-Content -LiteralPath $environmentFile |
-    Where-Object { $_ -match '^\s*DATABASE_URL\s*=' } |
-    Select-Object -First 1
-  if ($null -eq $line) {
-    return $null
-  }
-
-  return ($line -replace '^\s*DATABASE_URL\s*=', '').Trim()
+  return $env:DATABASE_URL
 }
 
 function Start-LocalApi {
@@ -55,8 +62,9 @@ function Start-LocalApi {
 
   param([Parameter(Mandatory)] [string] $DatabaseUrl)
 
-  if (-not (Test-Path -LiteralPath $dartExecutable)) {
-    throw "Dart do Flutter não foi encontrado em $dartExecutable."
+  if ([string]::IsNullOrWhiteSpace($dartExecutable) -or
+      -not (Test-Path -LiteralPath $dartExecutable)) {
+    throw 'Dart não foi encontrado no PATH.'
   }
 
   New-Item -ItemType Directory -Path $runtimeDirectory -Force | Out-Null

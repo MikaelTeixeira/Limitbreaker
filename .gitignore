@@ -25,9 +25,11 @@ migrate_working_dir/
 
 # Flutter/Dart/Pub related
 flutter.bat
+!/flutter.bat
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.kotlin/
 .flutter-plugins-dependencies
 
 # Local inspection artifacts

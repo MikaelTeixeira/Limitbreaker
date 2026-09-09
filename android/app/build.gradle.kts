@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.limitbreaker.limit_breaker"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

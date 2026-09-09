@@ -31,7 +31,7 @@ flutter test
 flutter build apk --debug
 ```
 
-O último comando depende de um toolchain Android funcional. Na criação desta fase, a compilação Gradle não concluiu dentro de 5 minutos e deverá ser revalidada em um ambiente Android configurado.
+O build Android foi revalidado no toolchain local com Android SDK 37. Na primeira execução, o Gradle pode demorar enquanto baixa os artefatos nativos do Flutter e instala o CMake.
 
 ## Arquitetura
 
@@ -64,4 +64,4 @@ Detalhes: [arquitetura](docs/architecture.md), [estrutura do código](docs/code-
 - Com menos de três categorias, o ranking retorna resultado provisório sem pontuação oficial.
 - Edição de treinos, atividades, chat, scanner QR e notificações reais estão planejados.
 - Os gráficos mostram valores normalizados simulados, não diagnóstico fisiológico.
-- Build iOS requer macOS; build Android ainda precisa de revalidação do Gradle local.
+- Build iOS requer macOS; o build Android de depuração está validado no toolchain local.
