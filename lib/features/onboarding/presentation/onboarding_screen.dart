@@ -31,6 +31,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   String? _limitation;
   var _sports = List<SportType?>.filled(3, null);
   var _consent = false;
+  var _accountCreated = false;
 
   static const _goalLabels = {
     UserGoal.gainMuscle: 'Ganhar massa muscular',
@@ -97,14 +98,32 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       );
     } else {
       try {
-        await LocalApi.instance.register(
-          username: _username.text.trim(),
-          email: _email.text.trim(),
-          displayName: _name.text.trim(),
-          password: _password.text,
-          age: int.parse(_age.text),
-          heightCm: double.parse(_height.text.replaceAll(',', '.')),
-          weightKg: double.parse(_weight.text.replaceAll(',', '.')),
+        if (!_accountCreated) {
+          await LocalApi.instance.register(
+            username: _username.text.trim(),
+            email: _email.text.trim(),
+            displayName: _name.text.trim(),
+            password: _password.text,
+            age: int.parse(_age.text),
+            heightCm: double.parse(_height.text.replaceAll(',', '.')),
+            weightKg: double.parse(_weight.text.replaceAll(',', '.')),
+          );
+          _accountCreated = true;
+        }
+        await LocalApi.instance.saveOnboarding(
+          goal: _goalApiValue(_goal!),
+          sports: _sports.cast<SportType>().map(_sportApiValue).toList(),
+          activityBaseline: _health == 'Pratico atividade regularmente'
+              ? 'active'
+              : 'sedentary',
+          familyStatus: _family == 'Nenhum histórico relevante informado'
+              ? 'no_problem'
+              : 'reported',
+          limitationStatus: _limitation == 'Não possuo'
+              ? 'no_problem'
+              : 'reported',
+          requiresGentleTraining: false,
+          consentVersion: '0.1',
         );
       } on LocalApiException catch (error) {
         _message(error.message);
@@ -278,10 +297,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                 ),
                 _ChoiceStep(
-                  title: 'SAÚDE GERAL',
+                  title: 'NÍVEL DE ATIVIDADE',
                   subtitle:
-                      'Pergunta demonstrativa — critérios oficiais pendentes. Não é diagnóstico.',
+                      'Informe seu ponto de partida atual. Isso não é um diagnóstico.',
                   value: _health,
+                  labels: const [
+                    'Pratico atividade regularmente',
+                    'Estou sedentário no momento',
+                  ],
                   onChanged: (value) => setState(() => _health = value),
                 ),
                 _ChoiceStep(
@@ -289,6 +312,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   subtitle:
                       'Pergunta demonstrativa. As respostas serão tratadas como dados sensíveis.',
                   value: _family,
+                  labels: const [
+                    'Nenhum histórico relevante informado',
+                    'Possuo — informar detalhes depois',
+                  ],
                   onChanged: (value) => setState(() => _family = value),
                 ),
                 _ChoiceStep(
@@ -358,6 +385,24 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (shouldExit == true && mounted) context.go('/login');
   }
 }
+
+String _goalApiValue(UserGoal goal) => switch (goal) {
+  UserGoal.gainMuscle => 'gain_muscle',
+  UserGoal.loseFat => 'lose_fat',
+  UserGoal.conditioning => 'conditioning',
+  UserGoal.sportsPerformance => 'sports_performance',
+  UserGoal.health => 'health',
+  UserGoal.maintainFitness => 'maintain_fitness',
+};
+
+String _sportApiValue(SportType sport) => switch (sport) {
+  SportType.strength => 'strength',
+  SportType.running => 'running',
+  SportType.cycling => 'cycling',
+  SportType.swimming => 'swimming',
+  SportType.football => 'football',
+  SportType.martialArts => 'martial_arts',
+};
 
 String? _positive(String? value) =>
     double.tryParse((value ?? '').replaceAll(',', '.')) == null ||

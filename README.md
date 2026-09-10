@@ -6,12 +6,13 @@ Aplicativo mobile Flutter para acompanhar evolução física e esportiva com dis
 
 ## Estado atual
 
-A aplicação inicia sem registros fictícios: zero treinos, atividades, amigos, conquistas e pontuação. O onboarding inclui a escolha de modalidades primária, secundária e terciária para o Ranking. O ambiente de desenvolvimento já possui PostgreSQL local, API autenticada e persistência de contas e treinos. A persistência do onboarding e das sugestões de treino, a integração remota com Supabase e o Google OAuth permanecem pendentes.
+A aplicação inicia sem registros fictícios: zero treinos, atividades, amigos, conquistas e pontuação. O onboarding inclui a escolha de modalidades primária, secundária e terciária para o Ranking. O ambiente de desenvolvimento possui PostgreSQL local, API autenticada e persistência de contas, onboarding, sugestões e treinos. A integração remota e o Google OAuth permanecem pendentes.
 
 ## Requisitos
 
-- Flutter 3.44.4 (stable) ou compatível
-- Dart 3.12.2 ou compatível
+- Flutter 3.47.2 (stable) ou compatível
+- Dart 3.13.2 ou compatível
+- PostgreSQL 16 ou compatível para o ambiente local
 - Android Studio/SDK para Android
 - Xcode em macOS para iOS
 
@@ -35,7 +36,7 @@ O build Android foi revalidado no toolchain local com Android SDK 37. Na primeir
 
 ## Arquitetura
 
-O código usa organização feature-first com separação proporcional entre apresentação, domínio e dados. Riverpod fornece injeção de dependência e estado; GoRouter mantém rotas declarativas; `shared_preferences` persiste apenas a conclusão do onboarding. Contratos separam widgets dos futuros backends.
+O código usa organização feature-first com separação proporcional entre apresentação, domínio e dados. Riverpod fornece injeção de dependência e estado; GoRouter mantém rotas declarativas; `shared_preferences` mantém o estado auxiliar de conclusão do onboarding no dispositivo. Contas, onboarding, sugestões e treinos são persistidos no PostgreSQL exclusivamente pela API Dart local.
 
 ```text
 lib/
@@ -45,21 +46,25 @@ lib/
   shared/models/       modelos compartilhados
   shared/repositories/ contratos, mocks e providers
 test/                  domínio, fluxo e regressão visual
+server/                API Dart autenticada e inicialização do banco
+database/migrations/   esquema incremental do PostgreSQL local
 ```
 
-Detalhes: [arquitetura](docs/architecture.md), [estrutura do código](docs/code-structure.md), [regras de domínio](docs/domain-rules.md), [sistema de ranking](docs/ranking-system.md) e [backlog](docs/BACKLOG.md).
+Detalhes: [plano de execução](docs/EXECUTION_PLAN.md), [arquitetura](docs/architecture.md), [estrutura do código](docs/code-structure.md), [regras de domínio](docs/domain-rules.md), [sistema de ranking](docs/ranking-system.md) e [backlog](docs/BACKLOG.md).
 
 ## Dependências adicionadas
 
 - `go_router`: navegação declarativa.
 - `flutter_riverpod`: injeção de dependência e estado previsível.
-- `shared_preferences`: persistência local mínima do onboarding.
+- `shared_preferences`: estado auxiliar local da conclusão do onboarding.
+- `flutter_secure_storage`: armazenamento do token de sessão no dispositivo.
+- API Dart em `server/`: autenticação e fronteira segura entre o Flutter e o PostgreSQL.
 
-`flutter pub add` baixou essas dependências e suas dependências transitivas. Nenhum SDK externo, backend, chave ou segredo foi adicionado.
+Credenciais do PostgreSQL ficam apenas no arquivo local e ignorado `server/.env` ou na variável de ambiente `DATABASE_URL`. Nenhuma senha ou chave é incorporada ao Flutter.
 
 ## Limitações atuais
 
-- Ranking global, amigos e conquistas ainda são locais ou demonstrativos; contas, perfil autenticado e treinos já possuem integração com a API local.
+- Ranking global, amigos e conquistas ainda são locais ou demonstrativos; contas, perfil autenticado, onboarding, sugestões e treinos já possuem integração com a API local.
 - Perguntas de saúde, histórico familiar, termos e níveis são provisórios.
 - Com menos de três categorias, o ranking retorna resultado provisório sem pontuação oficial.
 - Edição de treinos, atividades, chat, scanner QR e notificações reais estão planejados.

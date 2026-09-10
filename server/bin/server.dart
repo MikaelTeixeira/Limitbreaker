@@ -24,6 +24,9 @@ Future<void> main() async {
     ..post('/auth/register', api.register)
     ..post('/auth/login', api.login)
     ..get('/me', api.me)
+    ..post('/onboarding', api.saveOnboarding)
+    ..get('/workout-suggestions', api.listWorkoutSuggestions)
+    ..post('/workout-suggestions', api.createWorkoutSuggestion)
     ..get('/workouts', api.listWorkouts)
     ..post('/workouts', api.createWorkout)
     ..get('/admin/exercises', api.adminExercises)
@@ -180,6 +183,176 @@ class _Api {
       parameters: {'id': id},
     );
     return result.isEmpty ? _unauthorized() : _ok(result.first.toColumnMap());
+  }
+
+  /// Persiste as preferências e respostas do onboarding do perfil autenticado.
+  Future<Response> saveOnboarding(Request request) async {
+    final profileId = await _profileId(request);
+    final body = await _body(request);
+    if (profileId == null) return _unauthorized();
+    if (body == null) return _bad('Dados do onboarding inválidos.');
+
+    final goal = _text(body['goal'], 3, 40);
+    final sports = body['sports'];
+    final activityBaseline = _text(body['activityBaseline'], 3, 20);
+    final familyStatus = _text(body['familyStatus'], 3, 20);
+    final limitationStatus = _text(body['limitationStatus'], 3, 20);
+    final requiresGentleTraining = body['requiresGentleTraining'];
+    final consentVersion = _text(body['consentVersion'], 1, 50);
+    const goals = {
+      'gain_muscle',
+      'lose_fat',
+      'conditioning',
+      'sports_performance',
+      'health',
+      'maintain_fitness',
+    };
+    const sportValues = {
+      'strength',
+      'running',
+      'cycling',
+      'swimming',
+      'football',
+      'martial_arts',
+    };
+    const disclosureValues = {'no_problem', 'reported'};
+    if (!goals.contains(goal) ||
+        sports is! List ||
+        sports.length != 3 ||
+        sports.any(
+          (sport) => sport is! String || !sportValues.contains(sport),
+        ) ||
+        sports.toSet().length != 3 ||
+        !const {'active', 'sedentary'}.contains(activityBaseline) ||
+        !disclosureValues.contains(familyStatus) ||
+        !disclosureValues.contains(limitationStatus) ||
+        requiresGentleTraining is! bool ||
+        consentVersion == null) {
+      return _bad('Confira as respostas do onboarding.');
+    }
+
+    final hasConcern =
+        familyStatus == 'reported' || limitationStatus == 'reported';
+    final trainingProfile = requiresGentleTraining
+        ? 4
+        : hasConcern
+        ? 3
+        : activityBaseline == 'sedentary'
+        ? 2
+        : 1;
+    await db.runTx((tx) async {
+      await tx.execute(
+        Sql.named(
+          'update app_profiles set goal = @goal, primary_sport = @primary, secondary_sport = @secondary, tertiary_sport = @tertiary, onboarding_completed_at = now(), updated_at = now() where id = @profile',
+        ),
+        parameters: {
+          'profile': profileId,
+          'goal': goal,
+          'primary': sports[0],
+          'secondary': sports[1],
+          'tertiary': sports[2],
+        },
+      );
+      final assessment = await tx.execute(
+        Sql.named(
+          'insert into health_assessments (profile_id, activity_baseline, requires_gentle_training, training_profile, consent_version) values (@profile, @baseline, @gentle, @trainingProfile, @consent) on conflict (profile_id) do update set activity_baseline = excluded.activity_baseline, requires_gentle_training = excluded.requires_gentle_training, training_profile = excluded.training_profile, consent_version = excluded.consent_version, updated_at = now() returning id',
+        ),
+        parameters: {
+          'profile': profileId,
+          'baseline': activityBaseline,
+          'gentle': requiresGentleTraining,
+          'trainingProfile': trainingProfile,
+          'consent': consentVersion,
+        },
+      );
+      final assessmentId = assessment.first[0];
+      await tx.execute(
+        Sql.named('delete from health_disclosures where assessment_id = @id'),
+        parameters: {'id': assessmentId},
+      );
+      for (final disclosure in [
+        (kind: 'family', question: 'family_history', status: familyStatus),
+        (
+          kind: 'personal',
+          question: 'physical_limitation',
+          status: limitationStatus,
+        ),
+      ]) {
+        await tx.execute(
+          Sql.named(
+            'insert into health_disclosures (assessment_id, disclosure_kind, question_id, status, description) values (@assessment, @kind, @question, @status, @description)',
+          ),
+          parameters: {
+            'assessment': assessmentId,
+            'kind': disclosure.kind,
+            'question': disclosure.question,
+            'status': disclosure.status,
+            'description': disclosure.status == 'reported'
+                ? 'Detalhes serão informados posteriormente.'
+                : null,
+          },
+        );
+      }
+    });
+    return _ok({'training_profile': trainingProfile});
+  }
+
+  /// Lista as sugestões já geradas para o perfil autenticado.
+  Future<Response> listWorkoutSuggestions(Request request) async {
+    final profileId = await _profileId(request);
+    if (profileId == null) return _unauthorized();
+    final rows = await db.execute(
+      Sql.named(
+        'select id::text as id, training_style, muscle_group, training_profile, suggestion, created_at::text as created_at from workout_suggestions where profile_id = @profile order by created_at desc',
+      ),
+      parameters: {'profile': profileId},
+    );
+    return _ok({'items': rows.map((row) => row.toColumnMap()).toList()});
+  }
+
+  /// Gera uma rotina pré-definida adequada ao perfil e a persiste no banco.
+  Future<Response> createWorkoutSuggestion(Request request) async {
+    final profileId = await _profileId(request);
+    final body = await _body(request);
+    if (profileId == null) return _unauthorized();
+    final category = _text(body?['category'], 3, 20);
+    if (!const {
+      'strength',
+      'running',
+      'cycling',
+      'swimming',
+    }.contains(category)) {
+      return _bad('Modalidade inválida para sugestão.');
+    }
+    final assessment = await db.execute(
+      Sql.named(
+        'select training_profile from health_assessments where profile_id = @profile',
+      ),
+      parameters: {'profile': profileId},
+    );
+    if (assessment.isEmpty) {
+      return _bad('Conclua o onboarding antes de solicitar uma sugestão.');
+    }
+    final trainingProfile = assessment.first[0] as int;
+    final suggestion = _predefinedSuggestion(category!, trainingProfile);
+    final inserted = await db.execute(
+      Sql.named(
+        'insert into workout_suggestions (profile_id, training_style, muscle_group, training_profile, suggestion) values (@profile, @style, @muscle, @trainingProfile, cast(@suggestion as jsonb)) returning id::text as id, created_at::text as created_at',
+      ),
+      parameters: {
+        'profile': profileId,
+        'style': category,
+        'muscle': category == 'strength' ? 'upper_body' : 'general',
+        'trainingProfile': trainingProfile,
+        'suggestion': jsonEncode(suggestion),
+      },
+    );
+    return _ok({
+      ...inserted.first.toColumnMap(),
+      'training_style': category,
+      'training_profile': trainingProfile,
+      'suggestion': suggestion,
+    }, status: 201);
   }
 
   /// Lista os treinos registrados pelo perfil autenticado.
@@ -504,6 +677,60 @@ int? _int(Object? value, int min, int max) {
 double? _number(Object? value, double min, double max) {
   final number = value is num ? value.toDouble() : double.tryParse('$value');
   return number != null && number >= min && number <= max ? number : null;
+}
+
+/// Monta uma sugestão determinística sem depender de serviços externos.
+Map<String, Object> _predefinedSuggestion(String category, int profile) {
+  final series = profile >= 3 ? 2 : 3;
+  final intensity = profile == 4
+      ? 'muito leve'
+      : profile == 3
+      ? 'leve'
+      : 'moderada';
+  final content = switch (category) {
+    'strength' => (
+      title: 'Força para membros superiores',
+      rationale: 'Prioriza movimentos básicos com intensidade $intensity.',
+      items: [
+        'Supino reto — $series séries',
+        'Remada baixa — $series séries',
+        'Desenvolvimento — $series séries',
+      ],
+    ),
+    'running' => (
+      title: 'Base para corrida',
+      rationale: 'Fortalece pernas e core com intensidade $intensity.',
+      items: [
+        'Agachamento com peso corporal — $series séries',
+        'Ponte de glúteos — $series séries',
+        'Prancha — $series séries',
+      ],
+    ),
+    'cycling' => (
+      title: 'Base para ciclismo',
+      rationale:
+          'Prioriza pernas, core e mobilidade com intensidade $intensity.',
+      items: [
+        'Leg press leve — $series séries',
+        'Elevação de panturrilhas — $series séries',
+        'Prancha lateral — $series séries',
+      ],
+    ),
+    _ => (
+      title: 'Base geral para natação',
+      rationale: 'Equilibra ombros, costas e core com intensidade $intensity.',
+      items: [
+        'Puxada frontal leve — $series séries',
+        'Rotação externa de ombro — $series séries',
+        'Prancha — $series séries',
+      ],
+    ),
+  };
+  return {
+    'title': content.title,
+    'rationale': content.rationale,
+    'items': content.items,
+  };
 }
 
 /// Cria uma resposta JSON de sucesso com o código HTTP informado.

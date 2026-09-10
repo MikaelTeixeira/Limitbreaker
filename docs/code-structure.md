@@ -23,7 +23,7 @@ Este projeto usa uma organização simples por responsabilidade. A ideia é que 
 
 ## Dados e repositórios
 
-- `lib/shared/data/local_api.dart`: cliente HTTP da API local. Faz login, cadastro, chamadas administrativas e criação/listagem de treinos autenticados.
+- `lib/shared/data/local_api.dart`: cliente HTTP da API local. Faz login, cadastro, onboarding, sugestões, chamadas administrativas e criação/listagem de treinos autenticados.
 - `lib/shared/repositories/repositories.dart`: arquivo índice. Ele exporta contratos, providers e implementações locais.
 - `lib/shared/repositories/repository_contracts.dart`: define o que cada área precisa oferecer, como autenticação, perfil, treino, atividade, ranking, conquistas e amigos.
 - `lib/shared/repositories/local_onboarding_repository.dart`: salva localmente se o onboarding já foi concluído.
@@ -47,7 +47,7 @@ Este projeto usa uma organização simples por responsabilidade. A ideia é que 
 - `lib/features/profile/presentation/profile_screen.dart`: dados e ações do perfil.
 - `lib/features/workouts/presentation/workouts_screens.dart`: listagem e sessão de treinos.
 - `lib/features/workouts/presentation/workout_registration_screen.dart`: registro manual de treinos e atividades.
-- `lib/features/workouts/presentation/suggested_workout_screen.dart`: sugestão de treino.
+- `lib/features/workouts/presentation/suggested_workout_screen.dart`: solicita à API uma rotina predefinida para a modalidade escolhida e apresenta a sugestão persistida.
 - `lib/features/activities/presentation/activities_screen.dart`: histórico de atividades esportivas.
 - `lib/features/exercises/presentation/exercises_screen.dart`: catálogo de exercícios.
 - `lib/features/achievements/presentation/achievements_screen.dart`: conquistas.

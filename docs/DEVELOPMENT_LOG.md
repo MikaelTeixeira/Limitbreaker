@@ -11,6 +11,13 @@
 - O APK de depuração foi compilado com sucesso usando Android SDK 37; as dependências nativas e o CMake necessários ficaram instalados localmente.
 - A versão web foi carregada e navegou da abertura até a tela de login. A criação de um AVD Android permanece opcional enquanto os testes forem realizados no Chrome.
 
+## 2026-09-09 — Persistência do onboarding e sugestões
+
+- Objetivo, prioridades esportivas, nível de atividade, histórico familiar, limitações e versão do consentimento passaram a ser persistidos pelo perfil autenticado.
+- A API calcula e armazena o perfil de treino de forma idempotente, sem expor a conexão PostgreSQL ao Flutter.
+- Sugestões pré-definidas passaram a ser geradas pela API conforme modalidade e perfil de treino e registradas no PostgreSQL.
+- Um ciclo descartável de integração validou cadastro, onboarding, criação e listagem de sugestão; os dados temporários foram removidos após o teste.
+
 ## 2026-08-06 — Fase 1
 
 - Inicializado projeto Flutter 3.44.4 / Dart 3.12.2 para Android e iOS.

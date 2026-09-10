@@ -8,9 +8,9 @@ Escolhida separação por feature com domínio isolado somente onde há regra re
 
 Riverpod centraliza injeção e estados assíncronos; GoRouter fornece rotas declarativas. Não serão misturados outros padrões de estado/rota sem necessidade comprovada.
 
-## ADR-003 — Persistência mínima
+## ADR-003 — Persistência local em duas camadas
 
-`shared_preferences` armazena somente a conclusão do onboarding. Respostas sensíveis não são persistidas nesta fase até existir estratégia de segurança e exclusão de dados.
+`shared_preferences` mantém apenas um estado auxiliar da conclusão do onboarding no dispositivo. Os dados do perfil, respostas do onboarding e consentimento são persistidos no PostgreSQL pela API autenticada, associados exclusivamente ao perfil da sessão. Respostas de saúde não podem aparecer em logs ou analytics; política formal de retenção e exclusão ainda precisa ser definida antes do backend remoto.
 
 ## ADR-004 — Ranking provisório explícito
 

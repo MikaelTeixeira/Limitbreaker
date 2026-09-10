@@ -15,7 +15,7 @@ O banco local `limitbreaker` usa o PostgreSQL instalado na máquina para desenvo
 ## Segurança
 
 - O APK Flutter não recebe senha, string de conexão PostgreSQL, nem credenciais administrativas.
-- A API local autenticada em `server/` valida a identidade e grava apenas os dados do perfil autenticado. A próxima ampliação é persistir onboarding e sugestões de treino pela mesma fronteira.
+- A API local autenticada em `server/` valida a identidade e grava apenas os dados do perfil autenticado, incluindo onboarding, sugestões e treinos.
 - A migração local é separada da migração Supabase em `supabase/migrations/`, pois a segunda depende de `auth.users` e RLS do Supabase.
 - Não registre respostas de saúde em logs, analytics ou mensagens de erro.
 
@@ -62,7 +62,7 @@ dart run bin/server.dart
 Ao iniciar, a API executa a mesma preparação automaticamente. O comando de
 inicialização é útil para validar o banco antes de subir a API.
 
-Use `http://127.0.0.1:8080/health` para verificar a integração PostgreSQL. A API local expõe cadastro, login, perfil autenticado e criação/listagem de treinos. Os endpoints de treino exigem `Authorization: Bearer <token>` e gravam somente no perfil da sessão autenticada.
+Use `http://127.0.0.1:8080/health` para verificar a integração PostgreSQL. A API local expõe cadastro, login, perfil autenticado, persistência de onboarding e criação/listagem de sugestões e treinos. Os endpoints de onboarding, sugestões e treinos exigem `Authorization: Bearer <token>` e gravam somente no perfil da sessão autenticada.
 
 Para rodar no Windows ou navegador, o Flutter usa `http://127.0.0.1:8080` por padrão. Em emulador Android, use:
 

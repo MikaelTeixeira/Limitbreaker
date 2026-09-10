@@ -5,7 +5,7 @@
 - Fase 1 — Fundação e vertical slice: concluída.
 - Fase 2 — Treinos e atividades: concluída no fluxo principal; edição, imagens e recordes ampliados permanecem pendentes.
 - Fase 3 — Social e conquistas: em desenvolvimento.
-- Fase 4A — Backend local: concluída para autenticação, perfil autenticado e persistência de treinos.
+- Fase 4A — Backend local: concluída para autenticação, perfil, onboarding, sugestões predefinidas e persistência de treinos.
 - Fase 4B — Backend remoto: planejada; inclui Supabase, Google OAuth, sincronização ampliada, fotos e tempo real.
 - Fase 5 — Inteligência e personalização: fora do escopo imediato.
 
@@ -22,10 +22,10 @@
 ## Próximo
 
 - Refinamento de acessibilidade com leitores de tela reais.
-- Persistir onboarding e sugestões de treino na API local PostgreSQL.
 - Fase 3: convites locais, amizades, chat demonstrativo e conquistas completas.
 - Completar edição de treinos e perfil, imagens de execução e recordes por modalidade.
-- Sugestão de treino: usar rotinas pré-definidas conforme as preferências até a contratação de uma chave de API; depois substituir por IA via backend, sem chave no Flutter.
+
+O detalhamento e a ordem de trabalho ficam no [plano de execução](EXECUTION_PLAN.md).
 
 ## Planejado — Próximas fases
 

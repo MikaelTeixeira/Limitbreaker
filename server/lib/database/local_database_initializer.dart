@@ -18,6 +18,8 @@ class LocalDatabaseInitializer {
     '202608170001_exercise_catalog.sql',
     '202608170002_users.sql',
     '202608170003_admin_access.sql',
+    '202609090001_onboarding_persistence.sql',
+    '202609090002_workout_suggestion_categories.sql',
   ];
 
   /// Cria o banco e aplica as migrações pendentes para a URL informada.

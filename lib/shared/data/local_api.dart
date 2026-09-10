@@ -58,6 +58,48 @@ class LocalApi {
     );
   }
 
+  /// Persiste as preferências e respostas finais do onboarding.
+  Future<int> saveOnboarding({
+    required String goal,
+    required List<String> sports,
+    required String activityBaseline,
+    required String familyStatus,
+    required String limitationStatus,
+    required bool requiresGentleTraining,
+    required String consentVersion,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/onboarding'),
+      headers: {
+        'content-type': 'application/json',
+        'authorization': 'Bearer ${await _token()}',
+      },
+      body: jsonEncode({
+        'goal': goal,
+        'sports': sports,
+        'activityBaseline': activityBaseline,
+        'familyStatus': familyStatus,
+        'limitationStatus': limitationStatus,
+        'requiresGentleTraining': requiresGentleTraining,
+        'consentVersion': consentVersion,
+      }),
+    );
+    return _decode(response)['training_profile'] as int;
+  }
+
+  /// Gera e persiste uma sugestão pré-definida para a modalidade escolhida.
+  Future<Map<String, dynamic>> createWorkoutSuggestion(String category) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/workout-suggestions'),
+      headers: {
+        'content-type': 'application/json',
+        'authorization': 'Bearer ${await _token()}',
+      },
+      body: jsonEncode({'category': category}),
+    );
+    return Map<String, dynamic>.from(_decode(response)['suggestion'] as Map);
+  }
+
   /// Informa se a sessão local pertence a uma conta administradora.
   Future<bool> isAdministrator() async =>
       await _storage.read(key: _userTypeKey) == 'administrator';
