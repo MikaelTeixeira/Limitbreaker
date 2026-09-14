@@ -57,6 +57,11 @@ Este projeto usa uma organização simples por responsabilidade. A ideia é que 
 
 - `server/bin/server.dart`: API Dart local. Recebe `DATABASE_URL`, autentica usuários e acessa o PostgreSQL.
 - `server/bin/initialize_database.dart`: comando para criar o banco local e aplicar migrações pendentes sem iniciar a API.
+- `server/bin/seed_admin.dart`: comando que cria ou promove a conta administrativa configurada no ambiente local.
+- `server/lib/http/cors.dart`: concentra os cabeçalhos CORS usados pela API, inclusive as operações administrativas `PATCH` e `DELETE`.
+- `server/lib/database/admin_seed.dart`: valida a configuração de bootstrap e grava a conta administrativa com senha em hash BCrypt.
 - `server/lib/database/local_database_initializer.dart`: camada de persistência que verifica a existência do banco, o cria quando necessário e controla as migrações aplicadas.
+- `server/start_local_api.ps1`: prepara as dependências, aplica o seed opcional e inicia a API no Windows.
+- `flutter.bat`: wrapper Windows versionado que encaminha o comando Flutter somente depois de a API local estar disponível.
 - `database/migrations/`: migrações do PostgreSQL local usado no desenvolvimento.
 - `supabase/migrations/`: migrações separadas para uma futura integração Supabase.

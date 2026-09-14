@@ -22,6 +22,11 @@ flutter pub get
 flutter run
 ```
 
+No Windows, ao executar o comando na raiz do projeto, o `flutter.bat`
+versionado prepara a API PostgreSQL local antes de abrir o aplicativo. Crie
+`server/.env` a partir de `server/.env.example`; a configuração completa está
+em [docs/LOCAL_DATABASE.md](docs/LOCAL_DATABASE.md).
+
 Qualidade:
 
 ```bash

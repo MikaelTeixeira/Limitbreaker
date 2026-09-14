@@ -90,3 +90,9 @@
 - Adicionado tipo de conta `standard`/`administrator`, estado de ativação e sessões vinculadas à conta.
 - Mikael Teixeira foi configurado como administrador.
 - Criado painel administrativo exclusivo para criar eventos, administrar exercícios e ativar/desativar contas, promover/rebaixar administradores e redefinir senhas.
+
+## 2026-09-13 — Inicialização local reproduzível
+
+- Corrigido o preflight CORS para permitir `PATCH` e `DELETE` no painel administrativo web.
+- Versionado o wrapper Windows que prepara a API local antes de encaminhar `flutter run`.
+- Adicionado seed idempotente por `server/.env` para criar ou promover a conta administrativa sem versionar senha.

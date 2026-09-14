@@ -24,7 +24,6 @@ migrate_working_dir/
 #.vscode/
 
 # Flutter/Dart/Pub related
-flutter.bat
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
@@ -40,6 +39,7 @@ flutter.bat
 /build/
 /coverage/
 /test/failures/
+/server/.runtime/
 
 # Symbolication related
 app.*.symbols

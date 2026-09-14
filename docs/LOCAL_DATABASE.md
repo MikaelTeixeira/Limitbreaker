@@ -42,14 +42,17 @@ A ponte fica em `server/` e é o único componente que pode receber `DATABASE_UR
 
 No Windows, o comando `flutter run -d chrome` executado na raiz do projeto
 inicia essa API automaticamente quando ela ainda não estiver saudável. O
-arquivo `flutter.bat` chama `server/start_local_api.ps1`, que lê somente o
-arquivo local e ignorado `server/.env`. Assim, o navegador continua recebendo
-apenas a URL da API local, nunca a senha do PostgreSQL.
+arquivo versionado `flutter.bat` encontra o Flutter instalado no `PATH` (ou em
+`FLUTTER_ROOT`), chama `server/start_local_api.ps1` e só então repassa o comando
+original ao Flutter. O script lê somente o arquivo local e ignorado
+`server/.env`; assim, o navegador continua recebendo apenas a URL da API local,
+nunca a senha do PostgreSQL.
 
 Antes do primeiro uso, crie `server/.env` a partir de `server/.env.example` e
 preencha `DATABASE_URL`. Depois disso, basta iniciar o Flutter pela raiz do
-projeto. Para investigar a API separadamente, ainda é possível executá-la
-manualmente:
+projeto. O script restaura as dependências do servidor, prepara o banco e
+aguarda o endpoint de saúde antes de iniciar o Flutter. Para investigar a API
+separadamente, ainda é possível executá-la manualmente:
 
 ```powershell
 Set-Location server
@@ -60,6 +63,18 @@ dart run bin/server.dart
 
 Ao iniciar, a API executa a mesma preparação automaticamente. O comando de
 inicialização é útil para validar o banco antes de subir a API.
+
+## Administrador local inicial
+
+`ADMIN_USERNAME` é opcional. Quando ele aponta para uma conta já existente, o
+seed a ativa e a promove para `administrator`, sem mudar a senha. Para criar a
+conta em uma base vazia, preencha também `ADMIN_DISPLAY_NAME`, `ADMIN_EMAIL`,
+`ADMIN_PASSWORD`, `ADMIN_AGE`, `ADMIN_HEIGHT_CM` e `ADMIN_WEIGHT_KG` no
+`server/.env` local.
+
+O seed pode ser executado várias vezes sem duplicar a conta. A senha só é
+substituída quando `ADMIN_RESET_PASSWORD=true` estiver definido explicitamente.
+Não versione `server/.env` nem compartilhe suas credenciais.
 
 Use `http://127.0.0.1:8080/health` para verificar a integração PostgreSQL. A API local expõe cadastro, login, perfil autenticado e criação/listagem de treinos. Os endpoints de treino exigem `Authorization: Bearer <token>` e gravam somente no perfil da sessão autenticada.
 
