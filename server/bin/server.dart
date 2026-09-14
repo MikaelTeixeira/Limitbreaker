@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:bcrypt/bcrypt.dart';
 import 'package:crypto/crypto.dart';
 import 'package:limit_breaker_local_api/database/local_database_initializer.dart';
+import 'package:limit_breaker_local_api/http/cors.dart';
 import 'package:postgres/postgres.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
@@ -40,7 +41,7 @@ Future<void> main() async {
     ..patch('/admin/events/<id>/start', api.startEvent)
     ..patch('/admin/events/<id>/finish', api.finishEvent);
   final handler = const Pipeline()
-      .addMiddleware(_cors)
+      .addMiddleware(corsMiddleware)
       .addMiddleware(logRequests())
       .addHandler(router.call);
   final server = await shelf_io.serve(
@@ -50,19 +51,6 @@ Future<void> main() async {
   );
   stdout.writeln('API local em http://${server.address.host}:${server.port}');
 }
-
-/// Permite chamadas do aplicativo web para a API local durante o desenvolvimento.
-final _cors = createMiddleware(
-  requestHandler: (request) =>
-      request.method == 'OPTIONS' ? Response.ok('', headers: _headers) : null,
-  responseHandler: (response) => response.change(headers: _headers),
-);
-const _headers = {
-  'content-type': 'application/json; charset=utf-8',
-  'access-control-allow-origin': '*',
-  'access-control-allow-headers': 'authorization, content-type',
-  'access-control-allow-methods': 'GET, POST, OPTIONS',
-};
 
 /// Implementa os endpoints da API e concentra o acesso autenticado ao banco.
 class _Api {
@@ -503,7 +491,7 @@ class _Api {
     );
     return result.isEmpty
         ? Response.notFound('Não encontrado.')
-        : Response(204, headers: _headers);
+        : Response(204, headers: apiHeaders);
   }
 
   /// Lista contas e permissões visíveis para a área administrativa.
@@ -735,7 +723,7 @@ Map<String, Object> _predefinedSuggestion(String category, int profile) {
 
 /// Cria uma resposta JSON de sucesso com o código HTTP informado.
 Response _ok(Object body, {int status = 200}) =>
-    Response(status, body: jsonEncode(body), headers: _headers);
+    Response(status, body: jsonEncode(body), headers: apiHeaders);
 
 /// Cria uma resposta JSON para dados inválidos.
 Response _bad(String text) => _ok({'error': text}, status: 400);

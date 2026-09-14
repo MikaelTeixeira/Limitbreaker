@@ -9,3 +9,5 @@ dependencies:
   postgres: ^3.5.12
   shelf: ^1.4.2
   shelf_router: ^1.1.4
+dev_dependencies:
+  test: ^1.25.15
