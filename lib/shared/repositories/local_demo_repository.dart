@@ -1,48 +1,18 @@
 import '../../features/ranking/domain/ranking_calculator.dart';
 import '../models/models.dart';
-import 'repository_contracts.dart';
 
 /// Implementação temporária em memória para telas ainda sem backend completo.
-class LocalAppRepository
-    implements
-        AuthenticationRepository,
-        ProfileRepository,
-        HealthRepository,
-        WorkoutRepository,
-        ActivityRepository,
-        DashboardRepository,
-        RankingRepository,
-        AchievementRepository,
-        FriendRepository,
-        ChatRepository {
+class LocalAppRepository {
   final List<WorkoutSession> _workoutSessions = [];
-  final List<ActivitySession> _activities = [];
   final List<FriendSummary> _friends = [];
   final List<FriendRequest> _requests = [];
   var _nextWorkoutSessionId = 1;
-  var _nextActivityId = 1;
 
-  @override
-  Future<UserProfile?> currentUser() async => null;
-
-  @override
-  Future<void> signOut() async {}
-
-  @override
-  Future<UserProfile> getProfile() async =>
-      throw StateError('Nenhum perfil foi cadastrado.');
-
-  @override
-  Future<HealthProfile?> getHealthProfile() async => null;
-
-  @override
   Future<List<WorkoutPlan>> getPlans() async => const [];
 
-  @override
   Future<List<WorkoutSession>> getSessions() async =>
       List.unmodifiable(_workoutSessions.reversed);
 
-  @override
   Future<WorkoutSession> startWorkout(
     WorkoutPlan plan,
     DateTime startedAt,
@@ -57,7 +27,6 @@ class LocalAppRepository
     return session;
   }
 
-  @override
   Future<WorkoutSession> completeWorkout(
     String sessionId, {
     required Duration duration,
@@ -84,81 +53,20 @@ class LocalAppRepository
     return session;
   }
 
-  @override
-  Future<List<ActivitySession>> getActivities() async =>
-      List.unmodifiable(_activities.reversed);
-
-  @override
-  Future<ActivitySession> addActivity({
-    required String categoryId,
-    required DateTime performedAt,
-    Duration? duration,
-    double? distanceKm,
-    int? intensity,
-  }) async {
-    final activity = ActivitySession(
-      id: 'activity-${_nextActivityId++}',
-      categoryId: categoryId,
-      performedAt: performedAt,
-      duration: duration,
-      distanceKm: distanceKm,
-      intensity: intensity,
-    );
-    _activities.add(activity);
-    return activity;
-  }
-
-  @override
-  Future<List<PersonalRecord>> getPersonalRecords() async {
-    final longestRun = _activities
-        .where(
-          (item) => item.categoryId == 'running' && item.distanceKm != null,
-        )
-        .fold<double>(
-          0,
-          (max, item) => item.distanceKm! > max ? item.distanceKm! : max,
-        );
-    if (longestRun == 0) return const [];
-
-    return [
-      PersonalRecord(
-        id: 'longest-run',
-        label: 'Maior corrida',
-        value: longestRun,
-        achievedAt: _activities
-            .firstWhere(
-              (item) =>
-                  item.categoryId == 'running' && item.distanceKm == longestRun,
-            )
-            .performedAt,
-      ),
-    ];
-  }
-
-  @override
-  Future<WorkoutPlan?> getTodayWorkout() async => null;
-
-  @override
   Future<List<RadarAttribute>> getMuscleAttributes() async => const [];
 
-  @override
   Future<List<RadarAttribute>> getCategoryAttributes() async => const [];
 
-  @override
   Future<RankingCalculationResult> getCurrentRanking() async =>
       const RankingCalculator().calculate(const []);
 
-  @override
   Future<List<Achievement>> getAchievements() async => const [];
 
-  @override
   Future<List<FriendSummary>> getFriends() async => List.unmodifiable(_friends);
 
-  @override
   Future<List<FriendRequest>> getRequests() async =>
       List.unmodifiable(_requests);
 
-  @override
   Future<FriendRequest> sendRequest(String code) async {
     final cleanCode = code.trim().toUpperCase();
     if (cleanCode.isEmpty) {
@@ -176,7 +84,6 @@ class LocalAppRepository
     return request;
   }
 
-  @override
   Future<void> respondToRequest(
     String requestId,
     FriendRequestStatus status,
@@ -205,7 +112,4 @@ class LocalAppRepository
       );
     }
   }
-
-  @override
-  Future<List<ChatConversation>> getConversations() async => const [];
 }

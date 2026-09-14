@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
+import '../models/models.dart';
+
 /// Cliente HTTP usado pelo Flutter para falar com a API local de desenvolvimento.
 class LocalApi {
   /// Impede instâncias externas e mantém um único cliente compartilhado.
@@ -88,14 +90,19 @@ class LocalApi {
   }
 
   /// Gera e persiste uma sugestão pré-definida para a modalidade escolhida.
-  Future<Map<String, dynamic>> createWorkoutSuggestion(String category) async {
+  Future<Map<String, dynamic>> createWorkoutSuggestion(
+    String category, {
+    String? muscleGroup,
+  }) async {
+    final body = <String, Object?>{'category': category};
+    if (muscleGroup != null) body['muscleGroup'] = muscleGroup;
     final response = await http.post(
       Uri.parse('$_baseUrl/workout-suggestions'),
       headers: {
         'content-type': 'application/json',
         'authorization': 'Bearer ${await _token()}',
       },
-      body: jsonEncode({'category': category}),
+      body: jsonEncode(body),
     );
     return Map<String, dynamic>.from(_decode(response)['suggestion'] as Map);
   }
@@ -108,6 +115,38 @@ class LocalApi {
   Future<void> signOut() async {
     await _storage.delete(key: _tokenKey);
     await _storage.delete(key: _userTypeKey);
+  }
+
+  /// Busca os dados básicos do perfil autenticado.
+  Future<UserProfile> getProfile() async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/me'),
+      headers: {'authorization': 'Bearer ${await _token()}'},
+    );
+    return UserProfile.fromJson(_decode(response));
+  }
+
+  /// Atualiza nome e medidas do perfil autenticado.
+  Future<UserProfile> updateProfile({
+    required String displayName,
+    required int age,
+    required double heightCm,
+    required double weightKg,
+  }) async {
+    final request = http.Request('PATCH', Uri.parse('$_baseUrl/me'))
+      ..headers.addAll({
+        'content-type': 'application/json',
+        'authorization': 'Bearer ${await _token()}',
+      })
+      ..body = jsonEncode({
+        'displayName': displayName,
+        'age': age,
+        'heightCm': heightCm,
+        'weightKg': weightKg,
+      });
+    return UserProfile.fromJson(
+      _decode(await http.Response.fromStream(await request.send())),
+    );
   }
 
   /// Lista usuários disponíveis na área administrativa.
@@ -198,6 +237,24 @@ class LocalApi {
         .toList();
   }
 
+  /// Busca uma sessão completa do perfil autenticado.
+  Future<Map<String, dynamic>> getWorkout(String id) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/workouts/$id'),
+      headers: {'authorization': 'Bearer ${await _token()}'},
+    );
+    return _decode(response);
+  }
+
+  /// Exclui uma sessão pertencente ao perfil autenticado.
+  Future<void> deleteWorkout(String id) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/workouts/$id'),
+      headers: {'authorization': 'Bearer ${await _token()}'},
+    );
+    if (response.statusCode != 204) _decode(response);
+  }
+
   /// Lê o token salvo ou interrompe a operação sem sessão ativa.
   Future<String> _token() async {
     final token = await _storage.read(key: _tokenKey);
@@ -214,12 +271,20 @@ class LocalApi {
     String path,
     Map<String, Object?> body,
   ) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl$path'),
-      headers: {'content-type': 'application/json'},
-      body: jsonEncode(body),
-    );
-    return _decode(response);
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl$path'),
+            headers: {'content-type': 'application/json'},
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 8));
+      return _decode(response);
+    } on Exception {
+      throw const LocalApiException(
+        'A API local está indisponível. Inicie o sistema pelo flutter.bat e confira o PostgreSQL.',
+      );
+    }
   }
 
   /// Converte a resposta JSON e lança um erro para códigos não bem-sucedidos.

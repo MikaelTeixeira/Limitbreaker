@@ -40,6 +40,12 @@ class WorkoutsScreen extends ConsumerWidget {
             eyebrow: 'Quando disponíveis',
           ),
           const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: () => context.push('/suggest-workout'),
+            icon: const Icon(Icons.auto_awesome),
+            label: const Text('SUGERIR NOVO TREINO'),
+          ),
+          const SizedBox(height: 12),
           plans.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (_, _) =>
@@ -70,7 +76,7 @@ class WorkoutsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 28),
-          const SectionHeading('Histórico', eyebrow: 'Nesta sessão'),
+          const SectionHeading('Histórico', eyebrow: 'Seus registros'),
           const SizedBox(height: 12),
           sessions.when(
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -94,6 +100,9 @@ class WorkoutsScreen extends ConsumerWidget {
                                 '${session.duration.inMinutes} min · ${session.exercises.length} exercícios',
                               ),
                               trailing: const Icon(Icons.arrow_forward),
+                              onTap: () => context.push(
+                                '/workouts/history/${session.id}',
+                              ),
                             ),
                           ),
                         )

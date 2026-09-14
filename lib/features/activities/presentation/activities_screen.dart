@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/app_theme.dart';
 import '../../../core/widgets/brand_widgets.dart';
+import '../../../shared/data/local_api.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/repositories/repositories.dart';
 import '../domain/pace_calculator.dart';
@@ -16,13 +17,12 @@ class ActivitiesScreen extends ConsumerStatefulWidget {
 class _ActivitiesScreenState extends ConsumerState<ActivitiesScreen> {
   final _distance = TextEditingController();
   final _duration = TextEditingController();
-  final _intensity = TextEditingController(text: '5');
   String _category = 'running';
+  var _saving = false;
   @override
   void dispose() {
     _distance.dispose();
     _duration.dispose();
-    _intensity.dispose();
     super.dispose();
   }
 
@@ -32,33 +32,38 @@ class _ActivitiesScreenState extends ConsumerState<ActivitiesScreen> {
         ? distance / 1000
         : distance;
     final minutes = int.tryParse(_duration.text);
-    final intensity = int.tryParse(_intensity.text);
     if (minutes == null ||
         minutes <= 0 ||
-        (distanceKm != null && distanceKm < 0) ||
-        (intensity != null && (intensity < 1 || intensity > 10))) {
+        distanceKm == null ||
+        distanceKm <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Informe duração válida e intensidade de 1 a 10.'),
-        ),
+        const SnackBar(content: Text('Informe duração e distância válidas.')),
       );
       return;
     }
-    await ref
-        .read(appRepositoryProvider)
-        .addActivity(
-          categoryId: _category,
-          performedAt: DateTime.now(),
-          duration: Duration(minutes: minutes),
-          distanceKm: distanceKm,
-          intensity: intensity,
-        );
+    setState(() => _saving = true);
+    try {
+      await LocalApi.instance.createWorkout({
+        'category': _category,
+        'durationSeconds': minutes * 60,
+        'distanceMeters': distanceKm * 1000,
+      });
+    } on LocalApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+      return;
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
     ref.invalidate(activitiesProvider);
     ref.invalidate(personalRecordsProvider);
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Atividade salva localmente.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Atividade salva.')));
     }
   }
 
@@ -71,7 +76,7 @@ class _ActivitiesScreenState extends ConsumerState<ActivitiesScreen> {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
-          const SectionHeading('Registrar atividade', eyebrow: 'Dados locais'),
+          const SectionHeading('Registrar atividade', eyebrow: 'Seu histórico'),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: _category,
@@ -79,7 +84,6 @@ class _ActivitiesScreenState extends ConsumerState<ActivitiesScreen> {
               DropdownMenuItem(value: 'running', child: Text('Corrida')),
               DropdownMenuItem(value: 'cycling', child: Text('Ciclismo')),
               DropdownMenuItem(value: 'swimming', child: Text('Natação')),
-              DropdownMenuItem(value: 'mobility', child: Text('Mobilidade')),
             ],
             onChanged: (value) => setState(() => _category = value!),
           ),
@@ -110,13 +114,10 @@ class _ActivitiesScreenState extends ConsumerState<ActivitiesScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          TextField(
-            controller: _intensity,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Intensidade (1–10)'),
+          FilledButton(
+            onPressed: _saving ? null : _save,
+            child: Text(_saving ? 'SALVANDO…' : 'SALVAR ATIVIDADE'),
           ),
-          const SizedBox(height: 12),
-          FilledButton(onPressed: _save, child: const Text('SALVAR ATIVIDADE')),
           const SizedBox(height: 28),
           const SectionHeading(
             'Recordes pessoais',
@@ -143,9 +144,7 @@ class _ActivitiesScreenState extends ConsumerState<ActivitiesScreen> {
                               color: AppColors.frost,
                             ),
                             title: Text(record.label),
-                            trailing: Text(
-                              '${record.value.toStringAsFixed(1)} km',
-                            ),
+                            trailing: Text(_recordValue(record)),
                           ),
                         ),
                       )
@@ -171,7 +170,7 @@ class _ActivitiesScreenState extends ConsumerState<ActivitiesScreen> {
                             leading: const Icon(Icons.directions_run),
                             title: Text(item.categoryId.toUpperCase()),
                             subtitle: Text(
-                              '${item.duration?.inMinutes ?? 0} min · intensidade ${item.intensity ?? '-'}${_pace(item) == null ? '' : ' · pace ${_pace(item)}'}',
+                              '${item.duration?.inMinutes ?? 0} min${_pace(item) == null ? '' : ' · pace ${_pace(item)}'}',
                             ),
                             trailing: Text(
                               item.distanceKm == null
@@ -193,4 +192,13 @@ class _ActivitiesScreenState extends ConsumerState<ActivitiesScreen> {
     duration: item.duration,
     distanceKm: item.distanceKm,
   );
+
+  String _recordValue(PersonalRecord record) {
+    if (record.unit == 's/km' || record.unit == 's/100m') {
+      final minutes = record.value ~/ 60;
+      final seconds = (record.value % 60).round().toString().padLeft(2, '0');
+      return '$minutes:$seconds ${record.unit.substring(1)}';
+    }
+    return '${record.value.toStringAsFixed(1)} ${record.unit}';
+  }
 }

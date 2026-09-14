@@ -8,7 +8,7 @@ O aplicativo é 100% Flutter/Dart, mobile-first e preparado para Android e iOS. 
 
 - `presentation`: telas, widgets, navegação e estados visuais.
 - `domain`: regras puras, como o cálculo de Ranking.
-- `data/application`: cliente de API, contratos, implementações locais/mock e providers Riverpod.
+- `data/application`: cliente de API, estado local provisório e providers Riverpod.
 - `core/shared`: design system, componentes reutilizáveis e modelos transversais.
 
 ## Estrutura simplificada
@@ -16,13 +16,13 @@ O aplicativo é 100% Flutter/Dart, mobile-first e preparado para Android e iOS. 
 Os modelos e repositórios compartilhados ficam divididos por responsabilidade, mas mantêm arquivos índice para facilitar imports:
 
 - `shared/models/models.dart` exporta arquivos menores como `user_profile.dart`, `health_models.dart`, `workout_models.dart` e `social_models.dart`.
-- `shared/repositories/repositories.dart` exporta contratos, providers e implementações locais.
+- `shared/repositories/repositories.dart` mantém um ponto de importação curto para providers e estado provisório.
 
 Um guia arquivo por arquivo fica em [estrutura do código](code-structure.md).
 
 ## Dependências e fluxo
 
-Os widgets consomem providers Riverpod. Providers expõem contratos de repositório com implementações locais para os módulos ainda não integrados e um cliente HTTP para autenticação, perfil, onboarding, sugestões e treinos. A aplicação inicia sem dados fictícios. A apresentação não conhece banco nem detalhes de armazenamento. O PostgreSQL local `limitbreaker` possui migrações em `database/migrations/` e é acessado exclusivamente pela API autenticada em `server/`, nunca diretamente pelo aplicativo Flutter.
+Os widgets consomem providers Riverpod. Os módulos integrados usam o cliente HTTP; recursos demonstrativos ainda usam um estado local simples. A aplicação inicia sem dados fictícios. O PostgreSQL local `limitbreaker` possui migrações em `database/migrations/` e é acessado exclusivamente pela API autenticada em `server/`, nunca diretamente pelo aplicativo Flutter.
 
 GoRouter declara o fluxo `/` → `/welcome` ou `/home`; as rotas principais usam uma navegação inferior com Início, Ranking, Amigos, Conquistas e Perfil. Não existe barra lateral.
 
@@ -32,7 +32,7 @@ O sistema visual fica em `app/theme/app_theme.dart` e centraliza cores, espaçam
 
 ## Evolução planejada
 
-- Separar repositórios mock por feature quando cada módulo ganhar regras próprias.
+- Substituir gradualmente o estado provisório pela API quando cada módulo for implementado.
 - Adicionar estados tipados de aplicação para edição de treinos e atividades.
 - Completar edição de perfil e treinos, imagens de execução e recordes por modalidade.
 - Definir a arquitetura remota e a migração para Supabase antes da sincronização em produção.

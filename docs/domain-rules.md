@@ -40,12 +40,23 @@
 - Corrida e ciclismo exigem duração e pace no formato min:seg/km. Natação exige duração e distância em metros.
 - Registro e histórico de treinos já são persistidos pela API local. Edição completa, imagens de execução e consolidação de recordes para todas as modalidades permanecem em desenvolvimento.
 - Sugestões usam rotinas predefinidas e explicáveis, selecionadas pela API conforme modalidade e perfil de treino, e ficam registradas para o perfil autenticado. IA permanece fora do MVP atual.
+- Atividades de corrida, ciclismo e natação usam `workout_sessions` como fonte única; duração e distância devem ser positivas.
+- Corrida registra maior distância e melhor pace por quilômetro; ciclismo registra maior distância e maior velocidade média; natação registra maior distância e melhor pace por 100 metros.
+- Em empate de recorde, prevalece a atividade mais antiga e, persistindo o empate, o menor identificador.
+- Detalhes e exclusões de treino combinam o identificador solicitado com o perfil autenticado; registros de outras pessoas não são revelados.
+- A exclusão de um treino de musculação remove seus exercícios e séries pela cascata do banco, após confirmação explícita na interface.
 
 ## Privacidade
 
 - Nenhuma resposta de saúde deve ser registrada em logs, analytics ou mensagens de erro.
 - O aplicativo não afirma conformidade jurídica definitiva nem substituição de profissionais.
 - A transmissão local usa a API HTTP de desenvolvimento. Retenção, exclusão, sincronização remota e política formal de LGPD ainda dependem de decisões futuras.
+
+## Perfil
+
+- Nome, idade, altura e peso podem ser atualizados pelo perfil autenticado.
+- Alterações de nome atualizam de forma transacional o perfil físico e a conta vinculada.
+- O e-mail permanece somente leitura até existir uma política de alteração de credencial e reautenticação.
 
 ## Administração
 

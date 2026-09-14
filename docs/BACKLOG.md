@@ -23,7 +23,7 @@
 
 - Refinamento de acessibilidade com leitores de tela reais.
 - Fase 3: convites locais, amizades, chat demonstrativo e conquistas completas.
-- Completar edição de treinos e perfil, imagens de execução e recordes por modalidade.
+- Completar edição de treinos, imagens de execução e recordes por modalidade. A edição básica do perfil autenticado está integrada.
 
 O detalhamento e a ordem de trabalho ficam no [plano de execução](EXECUTION_PLAN.md).
 

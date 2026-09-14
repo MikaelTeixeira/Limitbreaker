@@ -72,11 +72,13 @@ class PersonalRecord {
     required this.id,
     required this.label,
     required this.value,
+    required this.unit,
     required this.achievedAt,
   });
 
   final String id;
   final String label;
   final double value;
+  final String unit;
   final DateTime achievedAt;
 }

@@ -2,6 +2,15 @@
 
 > Este arquivo é histórico: afirmações sobre trabalho "pendente" registram o estado na data de cada entrada. O estado corrente e a ordem de execução ficam em `BACKLOG.md`.
 
+## 2026-09-14 — Bloco 3 iniciado
+
+- A estrutura Flutter foi simplificada: contratos sem segunda implementação, métodos mortos, um repositório duplicado e a configuração Supabase inativa foram removidos.
+- O perfil passou a carregar dados da sessão autenticada e permite editar nome, idade, altura e peso pela API local.
+- A alteração de nome atualiza `app_profiles` e `users` na mesma transação; o e-mail permanece somente leitura.
+- O levantamento paralelo definiu como próxima fatia a unificação das atividades persistidas com histórico e recordes.
+- Corrida, ciclismo e natação passaram a usar as sessões do PostgreSQL como fonte única de histórico e recordes; o formulário antigo deixou de gravar em memória.
+- O histórico passou a abrir o detalhe persistido, incluindo exercícios e séries, e permite exclusão confirmada com isolamento pelo perfil autenticado.
+
 ## 2026-09-09 — Ambiente local revalidado
 
 - Flutter, Dart, Java, Android SDK, Chrome e PostgreSQL foram validados no Windows.

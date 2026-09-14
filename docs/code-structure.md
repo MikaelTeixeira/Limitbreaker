@@ -21,11 +21,10 @@ Este projeto usa uma organização simples por responsabilidade. A ideia é que 
 - `lib/shared/models/achievement_models.dart`: conquistas e progresso de conquistas.
 - `lib/shared/models/social_models.dart`: amigos, convites, conversas e mensagens.
 
-## Dados e repositórios
+## Dados e estado
 
-- `lib/shared/data/local_api.dart`: cliente HTTP da API local. Faz login, cadastro, onboarding, sugestões, chamadas administrativas e criação/listagem de treinos autenticados.
-- `lib/shared/repositories/repositories.dart`: arquivo índice. Ele exporta contratos, providers e implementações locais.
-- `lib/shared/repositories/repository_contracts.dart`: define o que cada área precisa oferecer, como autenticação, perfil, treino, atividade, ranking, conquistas e amigos.
+- `lib/shared/data/local_api.dart`: cliente HTTP da API local. Faz login, cadastro, leitura/edição de perfil, onboarding, sugestões, chamadas administrativas e criação/listagem de treinos autenticados.
+- `lib/shared/repositories/repositories.dart`: arquivo índice que mantém os imports das telas curtos.
 - `lib/shared/repositories/local_onboarding_repository.dart`: salva localmente se o onboarding já foi concluído.
 - `lib/shared/repositories/local_demo_repository.dart`: implementação temporária em memória para telas que ainda não usam backend completo.
 - `lib/shared/repositories/app_repository_providers.dart`: providers Riverpod que conectam telas aos repositórios e à API local.
@@ -33,9 +32,9 @@ Este projeto usa uma organização simples por responsabilidade. A ideia é que 
 ## Regras de domínio
 
 - `lib/features/onboarding/domain/training_profile_calculator.dart`: calcula o perfil de treino a partir das respostas de saúde e rotina.
+- `lib/features/activities/domain/personal_record_calculator.dart`: deriva recordes determinísticos das atividades persistidas.
 - `lib/features/ranking/domain/ranking_calculator.dart`: normaliza categorias, ordena as três maiores e aplica os pesos 75%, 15% e 10%.
 - `lib/features/exercises/data/exercise_catalog.dart`: catálogo provisório de exercícios e opções de atividades.
-- `lib/features/workouts/data/in_memory_workout_repository.dart`: repositório em memória usado por testes e fluxos provisórios de treino.
 
 ## Telas
 
@@ -44,9 +43,10 @@ Este projeto usa uma organização simples por responsabilidade. A ideia é que 
 - `lib/features/dashboard/presentation/dashboard_screen.dart`: tela inicial com resumo de progresso.
 - `lib/features/ranking/presentation/ranking_screen.dart`: tela de pontuação e estágio do ranking.
 - `lib/features/friends/presentation/friends_screen.dart`: tela social de amigos e convites.
-- `lib/features/profile/presentation/profile_screen.dart`: dados e ações do perfil.
+- `lib/features/profile/presentation/profile_screen.dart`: exibe os dados autenticados e permite editar nome, idade, altura e peso.
 - `lib/features/workouts/presentation/workouts_screens.dart`: listagem e sessão de treinos.
 - `lib/features/workouts/presentation/workout_registration_screen.dart`: registro manual de treinos e atividades.
+- `lib/features/workouts/presentation/workout_detail_screen.dart`: detalhe persistido e exclusão confirmada de um treino do perfil autenticado.
 - `lib/features/workouts/presentation/suggested_workout_screen.dart`: solicita à API uma rotina predefinida para a modalidade escolhida e apresenta a sugestão persistida.
 - `lib/features/activities/presentation/activities_screen.dart`: histórico de atividades esportivas.
 - `lib/features/exercises/presentation/exercises_screen.dart`: catálogo de exercícios.

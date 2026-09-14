@@ -49,7 +49,7 @@ lib/
   core/widgets/        componentes e painters reutilizáveis
   features/            onboarding, dashboard, ranking, social e perfil
   shared/models/       modelos compartilhados
-  shared/repositories/ contratos, mocks e providers
+  shared/repositories/ estado provisório e providers
 test/                  domínio, fluxo e regressão visual
 server/                API Dart autenticada e inicialização do banco
 database/migrations/   esquema incremental do PostgreSQL local

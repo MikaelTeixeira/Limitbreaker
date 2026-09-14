@@ -80,10 +80,36 @@ function Start-LocalApi {
   Start-Process @startOptions | Out-Null
 }
 
+function Stop-UnhealthyLocalApi {
+  <#
+  .SYNOPSIS
+  Stops a stale Dart API that still owns the local port but lost its database connection.
+  #>
+
+  $listeners = netstat -ano -p TCP | Select-String -Pattern '^\s*TCP\s+\S+:8080\s+\S+\s+LISTENING\s+(\d+)\s*$'
+  foreach ($listener in $listeners) {
+    $processId = [int] $listener.Matches[0].Groups[1].Value
+    $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
+    if ($null -ne $process -and $process.ProcessName -in @('dart', 'dartvm')) {
+      Stop-Process -Id $processId -Force
+      $process.WaitForExit(3000)
+    }
+  }
+}
+
 if (-not (Test-LocalApiHealthy)) {
   $databaseUrl = Get-DatabaseUrl
   if ([string]::IsNullOrWhiteSpace($databaseUrl)) {
     throw 'DATABASE_URL não foi encontrada em server/.env.'
   }
+  Stop-UnhealthyLocalApi
   Start-LocalApi -DatabaseUrl $databaseUrl
+  foreach ($attempt in 1..20) {
+    Start-Sleep -Milliseconds 250
+    if (Test-LocalApiHealthy) {
+      return
+    }
+  }
+  $errorLog = Join-Path $runtimeDirectory 'api.stderr.log'
+  throw "A API local nao iniciou. Consulte $errorLog e confirme que o PostgreSQL esta ativo."
 }

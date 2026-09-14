@@ -16,7 +16,7 @@ Future<void> main() async {
   final url = Platform.environment['DATABASE_URL'];
   if (url == null || url.isEmpty) throw StateError('Defina DATABASE_URL.');
   await LocalDatabaseInitializer.ensureCreated(url);
-  final db = await Connection.openFromUrl(
+  final db = Pool<void>.withUrl(
     url.contains('?') ? '$url&sslmode=disable' : '$url?sslmode=disable',
   );
   final api = _Api(db);
@@ -25,11 +25,14 @@ Future<void> main() async {
     ..post('/auth/register', api.register)
     ..post('/auth/login', api.login)
     ..get('/me', api.me)
+    ..patch('/me', api.updateMe)
     ..post('/onboarding', api.saveOnboarding)
     ..get('/workout-suggestions', api.listWorkoutSuggestions)
     ..post('/workout-suggestions', api.createWorkoutSuggestion)
     ..get('/workouts', api.listWorkouts)
     ..post('/workouts', api.createWorkout)
+    ..get('/workouts/<id>', api.getWorkout)
+    ..delete('/workouts/<id>', api.deleteWorkout)
     ..get('/admin/exercises', api.adminExercises)
     ..get('/admin/categories', api.adminCategories)
     ..post('/admin/exercises', api.createExercise)
@@ -56,7 +59,7 @@ Future<void> main() async {
 class _Api {
   /// Recebe a conexão PostgreSQL usada por todos os endpoints da API.
   _Api(this.db);
-  final Connection db;
+  final Pool<void> db;
 
   /// Confirma que a API consegue consultar o banco de dados.
   Future<Response> health(Request _) async {
@@ -166,11 +169,58 @@ class _Api {
     if (id == null) return _unauthorized();
     final result = await db.execute(
       Sql.named(
-        'select id, email, display_name, age, height_cm, weight_kg from app_profiles where id = @id',
+        'select id::text as id, email, display_name, age, height_cm, weight_kg, created_at::text as created_at from app_profiles where id = @id',
       ),
       parameters: {'id': id},
     );
     return result.isEmpty ? _unauthorized() : _ok(result.first.toColumnMap());
+  }
+
+  /// Atualiza os dados básicos do perfil vinculado à sessão atual.
+  Future<Response> updateMe(Request request) async {
+    final id = await _profileId(request);
+    final body = await _body(request);
+    if (id == null) return _unauthorized();
+    if (body == null) return _bad('Dados do perfil inválidos.');
+
+    final displayName = _text(body['displayName'], 2, 50);
+    final age = _int(body['age'], 13, 120);
+    final height = _number(body['heightCm'], 80, 250);
+    final weight = _number(body['weightKg'], 20, 400);
+    if (displayName == null ||
+        age == null ||
+        height == null ||
+        weight == null) {
+      return _bad('Confira os campos do perfil.');
+    }
+
+    try {
+      final profile = await db.runTx((tx) async {
+        final updated = await tx.execute(
+          Sql.named(
+            'update app_profiles set display_name = @name, age = @age, height_cm = @height, weight_kg = @weight, updated_at = now() where id = @id returning id::text as id, email, display_name, age, height_cm, weight_kg, created_at::text as created_at',
+          ),
+          parameters: {
+            'id': id,
+            'name': displayName,
+            'age': age,
+            'height': height,
+            'weight': weight,
+          },
+        );
+        if (updated.isEmpty) return null;
+        await tx.execute(
+          Sql.named(
+            'update users set display_name = @name where profile_id = @id',
+          ),
+          parameters: {'id': id, 'name': displayName},
+        );
+        return updated.first.toColumnMap();
+      });
+      return profile == null ? _unauthorized() : _ok(profile);
+    } on ServerException catch (_) {
+      return _bad('Não foi possível atualizar o perfil.');
+    }
   }
 
   /// Persiste as preferências e respostas do onboarding do perfil autenticado.
@@ -304,6 +354,7 @@ class _Api {
     final body = await _body(request);
     if (profileId == null) return _unauthorized();
     final category = _text(body?['category'], 3, 20);
+    final requestedMuscleGroup = _text(body?['muscleGroup'], 3, 20);
     if (!const {
       'strength',
       'running',
@@ -311,6 +362,23 @@ class _Api {
       'swimming',
     }.contains(category)) {
       return _bad('Modalidade inválida para sugestão.');
+    }
+    const strengthGroups = {
+      'chest',
+      'back',
+      'shoulders',
+      'forearms',
+      'biceps',
+      'triceps',
+      'legs',
+      'upper_body',
+      'lower_body',
+    };
+    final muscleGroup = category == 'strength'
+        ? requestedMuscleGroup ?? 'upper_body'
+        : 'general';
+    if (category == 'strength' && !strengthGroups.contains(muscleGroup)) {
+      return _bad('Grupo muscular inválido para sugestão.');
     }
     final assessment = await db.execute(
       Sql.named(
@@ -322,7 +390,11 @@ class _Api {
       return _bad('Conclua o onboarding antes de solicitar uma sugestão.');
     }
     final trainingProfile = assessment.first[0] as int;
-    final suggestion = _predefinedSuggestion(category!, trainingProfile);
+    final suggestion = _predefinedSuggestion(
+      category!,
+      trainingProfile,
+      muscleGroup,
+    );
     final inserted = await db.execute(
       Sql.named(
         'insert into workout_suggestions (profile_id, training_style, muscle_group, training_profile, suggestion) values (@profile, @style, @muscle, @trainingProfile, cast(@suggestion as jsonb)) returning id::text as id, created_at::text as created_at',
@@ -330,7 +402,7 @@ class _Api {
       parameters: {
         'profile': profileId,
         'style': category,
-        'muscle': category == 'strength' ? 'upper_body' : 'general',
+        'muscle': muscleGroup,
         'trainingProfile': trainingProfile,
         'suggestion': jsonEncode(suggestion),
       },
@@ -356,6 +428,69 @@ class _Api {
     return _ok({'items': rows.map((row) => row.toColumnMap()).toList()});
   }
 
+  /// Retorna uma sessão completa quando ela pertence ao perfil autenticado.
+  Future<Response> getWorkout(Request request, String id) async {
+    final profileId = await _profileId(request);
+    if (profileId == null) return _unauthorized();
+    if (!_isUuid(id)) return _notFound('Treino não encontrado.');
+    final sessions = await db.execute(
+      Sql.named(
+        'select id::text as id, category, performed_at::text as performed_at, duration_seconds, distance_meters from workout_sessions where id = @id and profile_id = @profile',
+      ),
+      parameters: {'id': id, 'profile': profileId},
+    );
+    if (sessions.isEmpty) return _notFound('Treino não encontrado.');
+
+    final rows = await db.execute(
+      Sql.named(
+        'select e.id::text as exercise_id, e.exercise_name, e.muscle_group, s.id::text as set_id, s.set_number, s.repetitions, s.load_kg from workout_exercises e left join workout_sets s on s.workout_exercise_id = e.id where e.workout_session_id = @id order by e.id, s.set_number',
+      ),
+      parameters: {'id': id},
+    );
+    final exercises = <String, Map<String, Object?>>{};
+    for (final row in rows) {
+      final values = row.toColumnMap();
+      final exerciseId = values['exercise_id'].toString();
+      final exercise = exercises.putIfAbsent(
+        exerciseId,
+        () => {
+          'id': exerciseId,
+          'name': values['exercise_name'],
+          'muscle_group': values['muscle_group'],
+          'sets': <Map<String, Object?>>[],
+        },
+      );
+      if (values['set_id'] != null) {
+        (exercise['sets']! as List<Map<String, Object?>>).add({
+          'id': values['set_id'],
+          'set_number': values['set_number'],
+          'repetitions': values['repetitions'],
+          'load_kg': values['load_kg'],
+        });
+      }
+    }
+    return _ok({
+      ...sessions.first.toColumnMap(),
+      'exercises': exercises.values.toList(),
+    });
+  }
+
+  /// Exclui uma sessão do perfil autenticado e seus filhos por cascata.
+  Future<Response> deleteWorkout(Request request, String id) async {
+    final profileId = await _profileId(request);
+    if (profileId == null) return _unauthorized();
+    if (!_isUuid(id)) return _notFound('Treino não encontrado.');
+    final deleted = await db.execute(
+      Sql.named(
+        'delete from workout_sessions where id = @id and profile_id = @profile returning id',
+      ),
+      parameters: {'id': id, 'profile': profileId},
+    );
+    return deleted.isEmpty
+        ? _notFound('Treino não encontrado.')
+        : Response(204, headers: apiHeaders);
+  }
+
   /// Valida e grava uma sessão de treino, incluindo exercícios e séries.
   Future<Response> createWorkout(Request request) async {
     final profileId = await _profileId(request);
@@ -374,7 +509,7 @@ class _Api {
           'swimming',
         }.contains(category) ||
         (category == 'strength' && exercises is! List) ||
-        (category != 'strength' && distance == null))
+        (category != 'strength' && (distance == null || duration <= 0)))
       return _bad('Dados do treino inválidos.');
     final session = await db.runTx((tx) async {
       final inserted = await tx.execute(
@@ -394,14 +529,12 @@ class _Api {
           if (raw is! Map) throw const FormatException();
           final name = _text(raw['name'], 2, 100);
           final group = _text(raw['muscleGroup'], 2, 50);
-          final sets = _int(raw['sets'], 1, 100);
-          final reps = _int(raw['repetitions'], 1, 1000);
-          final load = _number(raw['loadKg'], 0, 2000);
+          final sets = raw['sets'];
           if (name == null ||
               group == null ||
-              sets == null ||
-              reps == null ||
-              load == null)
+              sets is! List ||
+              sets.isEmpty ||
+              sets.length > 100)
             throw const FormatException();
           final exercise = await tx.execute(
             Sql.named(
@@ -409,18 +542,24 @@ class _Api {
             ),
             parameters: {'session': id, 'name': name, 'group': group},
           );
-          for (var i = 1; i <= sets; i++)
+          for (final entry in sets.indexed) {
+            final rawSet = entry.$2;
+            if (rawSet is! Map) throw const FormatException();
+            final reps = _int(rawSet['repetitions'], 1, 1000);
+            final load = _number(rawSet['loadKg'], 0, 2000);
+            if (reps == null || load == null) throw const FormatException();
             await tx.execute(
               Sql.named(
                 'insert into workout_sets (workout_exercise_id, set_number, repetitions, load_kg) values (@exercise, @number, @reps, @load)',
               ),
               parameters: {
                 'exercise': exercise.first[0],
-                'number': i,
+                'number': entry.$1 + 1,
                 'reps': reps,
                 'load': load,
               },
             );
+          }
         }
       return id;
     });
@@ -667,8 +806,17 @@ double? _number(Object? value, double min, double max) {
   return number != null && number >= min && number <= max ? number : null;
 }
 
+/// Evita enviar identificadores obviamente inválidos ao PostgreSQL.
+bool _isUuid(String value) => RegExp(
+  r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
+).hasMatch(value);
+
 /// Monta uma sugestão determinística sem depender de serviços externos.
-Map<String, Object> _predefinedSuggestion(String category, int profile) {
+Map<String, Object> _predefinedSuggestion(
+  String category,
+  int profile,
+  String muscleGroup,
+) {
   final series = profile >= 3 ? 2 : 3;
   final intensity = profile == 4
       ? 'muito leve'
@@ -676,15 +824,7 @@ Map<String, Object> _predefinedSuggestion(String category, int profile) {
       ? 'leve'
       : 'moderada';
   final content = switch (category) {
-    'strength' => (
-      title: 'Força para membros superiores',
-      rationale: 'Prioriza movimentos básicos com intensidade $intensity.',
-      items: [
-        'Supino reto — $series séries',
-        'Remada baixa — $series séries',
-        'Desenvolvimento — $series séries',
-      ],
-    ),
+    'strength' => _strengthSuggestion(muscleGroup, series, intensity),
     'running' => (
       title: 'Base para corrida',
       rationale: 'Fortalece pernas e core com intensidade $intensity.',
@@ -721,6 +861,103 @@ Map<String, Object> _predefinedSuggestion(String category, int profile) {
   };
 }
 
+({String title, String rationale, List<String> items}) _strengthSuggestion(
+  String group,
+  int series,
+  String intensity,
+) {
+  final details = switch (group) {
+    'chest' => (
+      'Peito',
+      [
+        'Supino reto com barra',
+        'Supino inclinado com halteres',
+        'Crucifixo no cabo',
+        'Peck deck',
+      ],
+    ),
+    'back' => (
+      'Costas',
+      [
+        'Puxada frontal aberta',
+        'Remada curvada com barra',
+        'Remada baixa no cabo',
+        'Pullover no cabo',
+      ],
+    ),
+    'shoulders' => (
+      'Ombros',
+      [
+        'Desenvolvimento com halteres',
+        'Elevação lateral no cabo',
+        'Elevação frontal com halteres',
+        'Face pull',
+      ],
+    ),
+    'forearms' => (
+      'Antebraços',
+      [
+        'Rosca de punho com barra',
+        'Rosca de punho inversa',
+        'Rosca martelo inversa',
+        'Farmer walk',
+      ],
+    ),
+    'biceps' => (
+      'Bíceps',
+      [
+        'Rosca direta com barra',
+        'Rosca alternada com halteres',
+        'Rosca martelo',
+        'Rosca Scott',
+      ],
+    ),
+    'triceps' => (
+      'Tríceps',
+      [
+        'Tríceps pulley com barra',
+        'Tríceps pulley com corda',
+        'Tríceps testa com barra W',
+        'Tríceps francês com halter',
+      ],
+    ),
+    'legs' => (
+      'Pernas',
+      [
+        'Agachamento livre',
+        'Leg press 45 graus',
+        'Cadeira extensora',
+        'Cadeira flexora',
+      ],
+    ),
+    'lower_body' => (
+      'Inferiores',
+      [
+        'Agachamento livre',
+        'Levantamento terra romeno',
+        'Elevação pélvica com barra',
+        'Elevação de panturrilha em pé',
+      ],
+    ),
+    _ => (
+      'Superiores',
+      [
+        'Supino reto com barra',
+        'Puxada frontal aberta',
+        'Desenvolvimento com halteres',
+        'Rosca direta com barra',
+        'Tríceps pulley com corda',
+      ],
+    ),
+  };
+  return (
+    title: 'Treino de ${details.$1}',
+    rationale:
+        'Foco em ${details.$1.toLowerCase()} com intensidade $intensity.',
+    items: details.$2.map((exercise) => '$exercise — $series séries').toList(),
+  );
+}
+
 /// Cria uma resposta JSON de sucesso com o código HTTP informado.
 Response _ok(Object body, {int status = 200}) =>
     Response(status, body: jsonEncode(body), headers: apiHeaders);
@@ -730,6 +967,9 @@ Response _bad(String text) => _ok({'error': text}, status: 400);
 
 /// Cria uma resposta JSON para conflito de dados existentes.
 Response _conflict(String text) => _ok({'error': text}, status: 409);
+
+/// Retorna ausência sem revelar se o recurso pertence a outro perfil.
+Response _notFound(String text) => _ok({'error': text}, status: 404);
 
 /// Cria uma resposta JSON quando a sessão não é autorizada.
 Response _unauthorized() =>

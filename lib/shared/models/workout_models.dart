@@ -31,11 +31,13 @@ class Exercise {
     required this.id,
     required this.name,
     required this.muscleGroup,
+    this.imageAssetPath,
   });
 
   final String id;
   final String name;
   final String muscleGroup;
+  final String? imageAssetPath;
 }
 
 /// Categorias de treino registráveis manualmente.

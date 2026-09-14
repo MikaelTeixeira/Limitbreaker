@@ -14,15 +14,10 @@ class SuggestedWorkoutScreen extends StatefulWidget {
 
 class _SuggestedWorkoutScreenState extends State<SuggestedWorkoutScreen> {
   var _focus = TrainingCategory.strength;
+  var _muscleGroup = 'upper_body';
   Map<String, dynamic>? _suggestion;
   String? _error;
-  var _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSuggestion();
-  }
+  var _loading = false;
 
   Future<void> _loadSuggestion() async {
     setState(() {
@@ -32,6 +27,7 @@ class _SuggestedWorkoutScreenState extends State<SuggestedWorkoutScreen> {
     try {
       final suggestion = await LocalApi.instance.createWorkoutSuggestion(
         _categoryApiValue(_focus),
+        muscleGroup: _focus == TrainingCategory.strength ? _muscleGroup : null,
       );
       if (!mounted) return;
       setState(() => _suggestion = suggestion);
@@ -65,11 +61,38 @@ class _SuggestedWorkoutScreenState extends State<SuggestedWorkoutScreen> {
                     selected: _focus == item,
                     onSelected: (_) {
                       setState(() => _focus = item);
-                      _loadSuggestion();
                     },
                   ),
                 )
                 .toList(),
+          ),
+          if (_focus == TrainingCategory.strength) ...[
+            const SizedBox(height: 18),
+            Text(
+              'FOCO DA MUSCULAÇÃO',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _muscleGroups
+                  .map(
+                    (item) => ChoiceChip(
+                      label: Text(item.label),
+                      selected: _muscleGroup == item.value,
+                      onSelected: (_) =>
+                          setState(() => _muscleGroup = item.value),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
+          const SizedBox(height: 20),
+          FilledButton.icon(
+            onPressed: _loading ? null : _loadSuggestion,
+            icon: const Icon(Icons.autorenew),
+            label: const Text('SUGERIR NOVO TREINO'),
           ),
           const SizedBox(height: 24),
           if (_loading)
@@ -90,7 +113,7 @@ class _SuggestedWorkoutScreenState extends State<SuggestedWorkoutScreen> {
                 ),
               ),
             )
-          else
+          else if (_suggestion != null)
             _SuggestionCard(suggestion: _suggestion!),
           const SizedBox(height: 18),
           const Text(
@@ -101,6 +124,18 @@ class _SuggestedWorkoutScreenState extends State<SuggestedWorkoutScreen> {
     );
   }
 }
+
+const _muscleGroups = [
+  (value: 'chest', label: 'Peito'),
+  (value: 'back', label: 'Costas'),
+  (value: 'shoulders', label: 'Ombro'),
+  (value: 'forearms', label: 'Antebraço'),
+  (value: 'biceps', label: 'Bíceps'),
+  (value: 'triceps', label: 'Tríceps'),
+  (value: 'legs', label: 'Perna'),
+  (value: 'upper_body', label: 'Superiores'),
+  (value: 'lower_body', label: 'Inferiores'),
+];
 
 class _SuggestionCard extends StatelessWidget {
   const _SuggestionCard({required this.suggestion});

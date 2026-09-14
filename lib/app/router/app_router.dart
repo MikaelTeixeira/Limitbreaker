@@ -14,6 +14,7 @@ import '../../features/ranking/presentation/ranking_screen.dart';
 import '../../features/shell/presentation/main_shell.dart';
 import '../../features/workouts/presentation/workouts_screens.dart';
 import '../../features/workouts/presentation/workout_registration_screen.dart';
+import '../../features/workouts/presentation/workout_detail_screen.dart';
 import '../../features/workouts/presentation/suggested_workout_screen.dart';
 import '../../shared/models/models.dart';
 
@@ -46,6 +47,11 @@ final appRouterProvider = Provider<GoRouter>(
       ),
       GoRoute(path: '/activities', builder: (_, _) => const ActivitiesScreen()),
       GoRoute(path: '/exercises', builder: (_, _) => const ExercisesScreen()),
+      GoRoute(
+        path: '/workouts/history/:workoutId',
+        builder: (_, state) =>
+            WorkoutDetailScreen(workoutId: state.pathParameters['workoutId']!),
+      ),
       GoRoute(
         path: '/workouts/:planId',
         builder: (_, state) =>

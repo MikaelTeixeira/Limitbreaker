@@ -59,9 +59,16 @@ class _WorkoutRegistrationScreenState
               (item) => {
                 'name': item.exercise.name,
                 'muscleGroup': item.exercise.muscleGroup,
-                'sets': int.parse(item.sets.text),
-                'repetitions': int.parse(item.repetitions.text),
-                'loadKg': double.parse(item.load.text.replaceAll(',', '.')),
+                'sets': item.sets
+                    .map(
+                      (set) => {
+                        'repetitions': int.parse(set.repetitions.text),
+                        'loadKg': double.parse(
+                          set.load.text.replaceAll(',', '.'),
+                        ),
+                      },
+                    )
+                    .toList(),
               },
             )
             .toList(),
@@ -206,6 +213,7 @@ class _WorkoutRegistrationScreenState
       ..._exercises.map(
         (draft) => _ExerciseEntry(
           draft: draft,
+          onSetChanged: (change) => setState(change),
           onRemove: () => setState(() {
             draft.dispose();
             _exercises.remove(draft);
@@ -264,42 +272,65 @@ class _WorkoutRegistrationScreenState
 }
 
 class _ExerciseDraft {
-  _ExerciseDraft(this.exercise);
+  _ExerciseDraft(this.exercise) : sets = List.generate(3, (_) => _SetDraft());
+
   final Exercise exercise;
-  final sets = TextEditingController(text: '3');
+  final List<_SetDraft> sets;
+
+  bool get isValid => sets.isNotEmpty && sets.every((set) => set.isValid);
+
+  void addSet() => sets.add(_SetDraft());
+
+  void removeSet(int index) {
+    if (sets.length == 1) return;
+    sets.removeAt(index).dispose();
+  }
+
+  PerformedExercise toPerformedExercise() => PerformedExercise(
+    exercise: exercise,
+    sets: sets
+        .map(
+          (set) => ExerciseSet(
+            repetitions: int.parse(set.repetitions.text),
+            loadKg: double.parse(set.load.text.replaceAll(',', '.')),
+          ),
+        )
+        .toList(),
+  );
+
+  void dispose() {
+    for (final set in sets) {
+      set.dispose();
+    }
+  }
+}
+
+class _SetDraft {
   final repetitions = TextEditingController(text: '10');
   final load = TextEditingController(text: '0');
 
   bool get isValid {
     final parsedLoad = double.tryParse(load.text.replaceAll(',', '.'));
-    return (int.tryParse(sets.text) ?? 0) > 0 &&
-        (int.tryParse(repetitions.text) ?? 0) > 0 &&
+    return (int.tryParse(repetitions.text) ?? 0) > 0 &&
         parsedLoad != null &&
         parsedLoad >= 0;
   }
 
-  PerformedExercise toPerformedExercise() => PerformedExercise(
-    exercise: exercise,
-    sets: List.generate(
-      int.parse(sets.text),
-      (_) => ExerciseSet(
-        repetitions: int.parse(repetitions.text),
-        loadKg: double.parse(load.text.replaceAll(',', '.')),
-      ),
-    ),
-  );
-
   void dispose() {
-    sets.dispose();
     repetitions.dispose();
     load.dispose();
   }
 }
 
 class _ExerciseEntry extends StatelessWidget {
-  const _ExerciseEntry({required this.draft, required this.onRemove});
+  const _ExerciseEntry({
+    required this.draft,
+    required this.onRemove,
+    required this.onSetChanged,
+  });
   final _ExerciseDraft draft;
   final VoidCallback onRemove;
+  final void Function(VoidCallback change) onSetChanged;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -311,7 +342,7 @@ class _ExerciseEntry extends StatelessWidget {
         children: [
           Row(
             children: [
-              const _PendingImage(),
+              _ExerciseImage(imageAssetPath: draft.exercise.imageAssetPath),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -323,18 +354,46 @@ class _ExerciseEntry extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              _NumberField(controller: draft.sets, label: 'Séries'),
-              const SizedBox(width: 8),
-              _NumberField(controller: draft.repetitions, label: 'Repetições'),
-              const SizedBox(width: 8),
-              _NumberField(
-                controller: draft.load,
-                label: 'Carga (kg)',
-                decimal: true,
+          ...draft.sets.indexed.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 58,
+                    child: Text(
+                      'Série ${entry.$1 + 1}',
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  _NumberField(
+                    controller: entry.$2.repetitions,
+                    label: 'Repetições',
+                  ),
+                  const SizedBox(width: 8),
+                  _NumberField(
+                    controller: entry.$2.load,
+                    label: 'Carga (kg)',
+                    decimal: true,
+                  ),
+                  if (draft.sets.length > 1)
+                    IconButton(
+                      tooltip: 'Remover série',
+                      onPressed: () =>
+                          onSetChanged(() => draft.removeSet(entry.$1)),
+                      icon: const Icon(Icons.remove_circle_outline),
+                    ),
+                ],
               ),
-            ],
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => onSetChanged(draft.addSet),
+              icon: const Icon(Icons.add),
+              label: const Text('ADICIONAR SÉRIE'),
+            ),
           ),
         ],
       ),
@@ -361,28 +420,53 @@ class _NumberField extends StatelessWidget {
   );
 }
 
+class _ExerciseImage extends StatelessWidget {
+  const _ExerciseImage({this.imageAssetPath});
+
+  final String? imageAssetPath;
+
+  @override
+  Widget build(BuildContext context) {
+    final imagePath = imageAssetPath;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        width: 64,
+        height: 64,
+        child: imagePath == null
+            ? const _PendingImage()
+            : Image.asset(
+                imagePath,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const _PendingImage(),
+              ),
+      ),
+    );
+  }
+}
+
 class _PendingImage extends StatelessWidget {
   const _PendingImage();
+
   @override
-  Widget build(BuildContext context) => Container(
-    width: 56,
-    height: 56,
+  Widget build(BuildContext context) => ColoredBox(
     color: AppColors.bone,
-    alignment: Alignment.center,
-    child: const Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.image_outlined, size: 18, color: AppColors.steel),
-        Text(
-          'IMAGEM\nPENDENTE',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 7,
-            fontWeight: FontWeight.w800,
-            color: AppColors.steel,
+    child: const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.image_outlined, size: 18, color: AppColors.steel),
+          Text(
+            'IMAGEM\nPENDENTE',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 7,
+              fontWeight: FontWeight.w800,
+              color: AppColors.steel,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }
@@ -433,6 +517,9 @@ class _ExercisePickerState extends State<_ExercisePicker> {
                 children: items
                     .map(
                       (item) => ListTile(
+                        leading: _ExerciseImage(
+                          imageAssetPath: item.imageAssetPath,
+                        ),
                         title: Text(item.name),
                         subtitle: Text(item.muscleGroup),
                         onTap: () => Navigator.pop(context, item),

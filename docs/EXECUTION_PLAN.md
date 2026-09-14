@@ -25,10 +25,10 @@ Commit de conclusão: `d92ad93` (`chore: validate local development environment`
 - Integrar os fluxos Flutter com endpoints autenticados.
 - Validar cadastro, onboarding, criação e consulta de sugestão em um ciclo descartável.
 
-## Bloco 3 — Completar treinos e perfil — próximo
+## Bloco 3 — Completar treinos e perfil — em andamento
 
-- Implementar edição de treinos e perfil.
-- Consolidar recordes por modalidade.
+- Implementar edição de treinos e perfil. Perfil, detalhe e exclusão segura de treinos estão integrados; alteração do conteúdo do treino permanece pendente.
+- Consolidar recordes por modalidade. Corrida, ciclismo e natação já usam atividades persistidas; musculação permanece pendente.
 - Adicionar imagens e orientações de execução quando houver conteúdo aprovado.
 - Refinar acessibilidade em leitores de tela e dispositivos reais.
 

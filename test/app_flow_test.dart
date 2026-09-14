@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:limit_breaker/app/app.dart';
 import 'package:limit_breaker/shared/repositories/repositories.dart';
 
-class _MemoryOnboardingRepository implements OnboardingRepository {
+class _MemoryOnboardingRepository extends LocalOnboardingRepository {
   _MemoryOnboardingRepository(this.done);
   bool done;
   @override
